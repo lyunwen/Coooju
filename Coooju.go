@@ -5,6 +5,7 @@ import (
 	"./cluster"
 	"./data"
 	"./sockects"
+	"./timer"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -17,8 +18,7 @@ func main() {
 		return
 	}
 
-	router := gin.Default()
-	//api路由
+	router := gin.Default()                                                //api路由
 	router.Group("/api/SynchronyNodeData").GET("/", api.SynchronyNodeData) //主同步备接口
 	router.Group("/api/IsMaster").GET("/", api.IsMaster)                   //备机找主机
 	//router.Group("/api/getAwards").GET("/", api.GetAwards)
@@ -57,5 +57,5 @@ func beforeStart() error {
 }
 
 func afterStart() {
-	//timer.Load()
+	timer.Load()
 }

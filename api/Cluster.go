@@ -38,10 +38,10 @@ func SynchronyNodeData(c *gin.Context) {
 
 func IsMaster(c *gin.Context) {
 	if global.IsMaster {
-		c.JSON(http.StatusOK, gin.H{"code": "0", "msg": "ok", "data": nil})
+		c.JSON(http.StatusOK, gin.H{"code": "0", "msg": "", "data": "yes"})
 		return
 	} else {
-		c.JSON(http.StatusOK, gin.H{"code": "99", "msg": "no", "data": nil})
+		c.JSON(http.StatusOK, gin.H{"code": "0", "msg": "", "data": "no"})
 		return
 	}
 }
