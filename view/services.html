@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>services</title>
+    <script type="text/javascript" src="/wwwroot/jquery-3.3.1.min.js"></script>
+    <style>
+        .service {
+            display: inline-block;
+            width: 430px;
+            border: 1px solid #dce0e6;
+        }
+    </style>
+</head>
+<body>
+
+<div class="head">
+    <ul>
+        <li><a href="###">Services</a></li>
+        <li><a href="###">Nodes</a></li>
+    </ul>
+</div>
+<div class="nav">
+    <ul>
+        <li><a href="###">Service</a></li>
+    </ul>
+</div>
+<div class="filter">
+
+</div>
+<div class="services">
+    <div class="service">
+        <div>Name</div>
+        <div>4 5 6</div>
+        <div>Tag</div>
+    </div>
+    <div class="service">
+        <div>Name</div>
+        <div>4 5 6</div>
+        <div>Tag</div>
+    </div>
+    <div class="service">
+        <div>Name</div>
+        <div>4 5 6</div>
+        <div>Tag</div>
+    </div>
+    <div class="service">
+        <div>Name</div>
+        <div>4 5 6</div>
+        <div>Tag</div>
+    </div>
+</div>
+<div class="console-info">
+
+</div>
+</body>
+</html>
+<script>
+    $(function () {
+        let socket = new WebSocket("ws://localhost:6001/ws");
+        console.log("Socket Connect Success");
+
+        socket.onopen = function () {
+            $(".console-info").text("Socket Open Success")
+            console.log("");
+        }
+
+        socket.onmessage = function (msg) {
+            console.log(msg.data)
+            $(".console-info").text("dddd")
+        }
+
+        // socket.onclose = function () {
+        //     console.log("Socket Close Success");
+        // }
+        //
+    })
+</script>
