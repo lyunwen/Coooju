@@ -4,6 +4,7 @@ import (
 	"./api"
 	"./cluster"
 	"./data"
+	"./global"
 	"./sockects"
 	"./timer"
 	"fmt"
