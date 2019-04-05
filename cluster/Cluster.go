@@ -30,7 +30,7 @@ func MasterCheck() {
 	case 1: //初始态
 		common.Log("服务状态调整 当前状态：初始态" + strconv.Itoa(global.SelfFlag))
 		client := &http.Client{}
-		for _, item := range global.SingletonNodeInfo.Clusters {
+		for i, item := range global.SingletonNodeInfo.Clusters {
 			request, err := http.NewRequest("GET", "http://"+item.Address+"/api/IsMaster/", nil)
 			if err == nil {
 				response, err := client.Do(request)
@@ -44,22 +44,14 @@ func MasterCheck() {
 							if dataStr == "3" { //遇到主机切备机
 								global.SelfFlag = 2
 								break
-							} else {
-								continue
 							}
-						} else {
-							continue
 						}
-					} else {
-						continue
 					}
-				} else {
-					continue
 				}
-			} else {
-				continue
 			}
-			global.SelfFlag = 3
+			if i+1 == len(global.SingletonNodeInfo.Clusters) {
+				global.SelfFlag = 3
+			}
 		}
 		break
 	case 2: //备机状态

@@ -20,8 +20,6 @@ func main() {
 
 	//cluster.SynchronyNodeData()
 
-	//cluster.MasterCheck()
-
 	router := gin.Default()                                                //api路由
 	router.Group("/api/SynchronyNodeData").GET("/", api.SynchronyNodeData) //主同步备接口
 	router.Group("/api/IsMaster").GET("/", api.IsMaster)                   //备机找主机
