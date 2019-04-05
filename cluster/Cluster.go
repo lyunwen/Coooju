@@ -5,74 +5,139 @@ import (
 	"../global"
 	"../models"
 	"encoding/json"
-	"fmt"
 	"github.com/pkg/errors"
 	"io/ioutil"
 	"net"
 	"net/http"
+	"strconv"
 	"strings"
-	"time"
 )
 
+type ClusterBackObj struct {
+	code string
+	msg  string
+	data interface{}
+}
+
+//非线程安全
 func MasterCheck() {
-	client := &http.Client{}
-	reqest, _ := http.NewRequest("GET", "http://127.0.0.1/health", nil)
+	//-1:非正常状态，手动处理 1：待转备机或升主机 2：备机状态 3：主机状态
+	switch global.MasterFlag {
+	case -1: //异常状态不检查
+		common.Log("当前机器状态" + strconv.Itoa(global.MasterFlag) + "异常 停止检测")
+		break
+	case 1: //修整
+		common.Log("当前机器状态待修整")
 
-	reqest.Header.Set("Accept", "application/json")
-	reqest.Header.Set("Accept-Charset", "utf-8")
-	reqest.Header.Set("Connection", "keep-alive")
+		break
+	case 2:
+		client := &http.Client{}
+		for _, item := range global.SingletonNodeInfo.Clusters {
+			request, err := http.NewRequest("GET", "http://"+item.Address+"/api/IsMaster/", nil)
+			if err != nil {
+				common.Log("获取 地址：" + item.Address + "error1")
+				continue
+			} else {
+				response, err := client.Do(request)
+				if err != nil {
+					common.Log("获取 地址：" + item.Address + "error2")
+					continue
+				}
+				if response.StatusCode != 200 {
+					common.Log("获取 地址：" + item.Address + "error3")
+					continue
+				} else {
+					body, err := ioutil.ReadAll(response.Body)
+					if err != nil {
+						common.Log("获取 地址：" + item.Address + "error4")
+						continue
+					} else {
+						backJsonStr := string(body)
+						var backJsonObj ClusterBackObj
+						if json.Unmarshal([]byte(backJsonStr), &backJsonObj) != nil {
+							var dataStr = backJsonObj.data.(map[string]interface{})["description"].(string)
+							if dataStr == "3" { //遇到主机切备机
+								global.MasterFlag = 2
+								break
+							} else if dataStr == "2" { //遇到备机往下走
+								global.MasterFlag = -1
+							} else { //其他情况切异常
+								global.MasterFlag = -1
+								common.Log("获取 地址：" + item.Address + "节点信息失败5")
+								break
+							}
+						}
+					}
+				}
+			}
+		}
+	case 3: //自己是主机停止检查
+		break
+	default:
+		global.MasterFlag = -1
+		common.Log("当前机器状态" + strconv.Itoa(global.MasterFlag) + "异常 停止检测")
+	}
 
-	response, err := client.Do(reqest)
-	if err != nil {
-		global.IsMaster = true
-	}
-	if response.StatusCode == 200 {
-		body, _ := ioutil.ReadAll(response.Body)
-		bodystr := string(body)
-		fmt.Println(bodystr)
-	}
 }
 
 func SynchronyNodeData() {
 	for _, item := range global.SingletonNodeInfo.Clusters {
-		result, err := synchronyNodeData(global.SingletonNodeInfo, item.Address+"/api/SynchronyNodeData")
-		if err != nil {
-			_ = common.Log(time.Now().Format("2005-01-02 15:04:05") + "synchronyNodeData error:" + err.Error())
-		}
-		switch result {
-		case "ok":
-			return
-		case "smaller":
-			_ = common.Log(time.Now().Format("2005-01-02 15:04:05") + "smaller smaller error:" + err.Error())
-			return
-		case "equal":
-			_ = common.Log(time.Now().Format("2005-01-02 15:04:05") + "equal version error:" + err.Error())
-			return
-		default:
-			_ = common.Log(time.Now().Format("2005-01-02 15:04:05") + "synchronyNodeData result error:" + err.Error())
-			return
-		}
+		synchronyNodeData(global.SingletonNodeInfo, item.Address)
+		//if err != nil {
+		//	_ = common.Log(time.Now().Format("2005-01-02 15:04:05") + "synchronyNodeData error:" + err.Error())
+		//}
+		//switch result {
+		//case "ok":
+		//	return
+		//case "smaller":
+		//	_ = common.Log(time.Now().Format("2005-01-02 15:04:05") + "smaller smaller error:" + err.Error())
+		//	return
+		//case "equal":
+		//	_ = common.Log(time.Now().Format("2005-01-02 15:04:05") + "equal version error:" + err.Error())
+		//	return
+		//default:
+		//	_ = common.Log(time.Now().Format("2005-01-02 15:04:05") + "synchronyNodeData result error:" + err.Error())
+		//	return
+		//}
 	}
 }
 
-func synchronyNodeData(data *models.Data, url string) (string, error) {
+// 地址/状态 1 可用 2网络不可用 4系统不可用 5系统内部未知异常 6系统内部已知异常 7同步成功 8无需同步 9不能同步
+var State = map[string]int{}
+
+func synchronyNodeData(data *models.Data, url string) {
 	client := new(http.Client)
-	dataJsonByte, err := json.Marshal(data)
+	_, err := json.Marshal(data)
 	if err != nil {
-		return "", err
+		panic(err)
 	}
-	dataJsonStr := string(dataJsonByte)
-	request, err := http.NewRequest("GET", url+"?data="+dataJsonStr, nil)
+	//dataJsonStr := string(dataJsonByte)
+	request, err := http.NewRequest("GET", "http://"+url+"/api/SynchronyNodeData?data=1", nil)
+	if err != nil {
+		panic(err)
+	}
 	response, err := client.Do(request)
 	if err != nil {
-		global.IsMaster = true
+		State[url] = 2
+		return
 	}
-	if response.StatusCode == 200 {
-		body, _ := ioutil.ReadAll(response.Body)
-		bodystr := string(body)
-		fmt.Println(bodystr)
+	if response.StatusCode != 200 {
+		State[url] = 5
+		return
 	}
-	return "", nil
+	body, _ := ioutil.ReadAll(response.Body)
+	bodyStr := string(body)
+	var backObj ClusterBackObj
+	if err := json.Unmarshal([]byte(bodyStr), &backObj); err != nil {
+		State[url] = 5
+		return
+	}
+	if backObj.code != "0" {
+		State[url] = 6
+		return
+	}
+	State[url] = 7
+	return
 }
 
 func GetAvailablePortAddress() (string, error) {

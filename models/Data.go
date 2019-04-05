@@ -15,7 +15,6 @@ type Data struct {
 	Description string
 	Url         string
 	Services    []Service
-	Nodes       []Node
 	Clusters    []Cluster
 }
 
