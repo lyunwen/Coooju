@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	url2 "net/url"
 	"strconv"
 	"strings"
 )
@@ -107,12 +108,13 @@ var State = map[string]int{}
 
 func synchronyNodeData(data *models.Data, url string) {
 	client := new(http.Client)
-	_, err := json.Marshal(data)
+	dataJsonBytes := make([]byte, 1024)
+	dataJsonBytes, err := json.Marshal(data)
 	if err != nil {
 		panic(err)
 	}
-	//dataJsonStr := string(dataJsonByte)
-	request, err := http.NewRequest("GET", "http://"+url+"/api/SynchronyNodeData?data=1", nil)
+	dataJsonStr := string(dataJsonBytes)
+	request, err := http.NewRequest("GET", "http://"+url+"/api/SynchronyNodeData?data="+url2.PathEscape(dataJsonStr), nil)
 	if err != nil {
 		panic(err)
 	}

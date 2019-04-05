@@ -5,10 +5,16 @@ import (
 	"../models"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"net/url"
 )
 
 func SynchronyNodeData(c *gin.Context) {
 	var dataStr = c.Query("data")
+	dataStr, err := url.PathUnescape(dataStr)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": "99", "msg": "data Unescape error", "data": nil})
+		return
+	}
 	tranDataObj, err := new(models.Data).GetDataFromJsonStr(dataStr)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": "99", "msg": "data explain error", "data": nil})

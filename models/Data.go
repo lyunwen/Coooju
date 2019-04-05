@@ -1,6 +1,7 @@
 package models
 
 import (
+	"bytes"
 	"encoding/json"
 	"github.com/pkg/errors"
 	"io/ioutil"
@@ -41,6 +42,7 @@ func (data *Data) GetData() (*Data, error) {
 	if err != nil {
 		return data, err
 	}
+	dataJsonByte = bytes.TrimPrefix(dataJsonByte, []byte("\xef\xbb\xbf"))
 	dataJsonStr := string(dataJsonByte)
 	err = json.Unmarshal([]byte(dataJsonStr), &data)
 	if err != nil {
