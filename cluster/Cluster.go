@@ -20,37 +20,64 @@ type ClusterBackObj struct {
 	data interface{}
 }
 
-//非线程安全
+//非线程安全 服务状态调整
 func MasterCheck() {
 	//// -1:异常态 1：初始态 2：备机状态 3：主机状态
 	switch global.SelfFlag {
-	case -1: //异常状态不检查
-		common.Log("当前机器状态" + strconv.Itoa(global.MasterFlag) + "异常 停止检测")
+	case -1: //异常态
+		common.Log("服务状态调整 当前状态：初始态" + strconv.Itoa(global.SelfFlag))
 		break
-	case 1: //修整
-		common.Log("当前机器状态待修整")
-
+	case 1: //初始态
+		common.Log("服务状态调整 当前状态：初始态" + strconv.Itoa(global.SelfFlag))
+		client := &http.Client{}
+		for _, item := range global.SingletonNodeInfo.Clusters {
+			request, err := http.NewRequest("GET", "http://"+item.Address+"/api/IsMaster/", nil)
+			if err == nil {
+				response, err := client.Do(request)
+				if err == nil && response.StatusCode == 200 {
+					body, err := ioutil.ReadAll(response.Body)
+					if err == nil {
+						backJsonStr := string(body)
+						var backJsonObj ClusterBackObj
+						if json.Unmarshal([]byte(backJsonStr), &backJsonObj) != nil {
+							var dataStr = backJsonObj.data.(map[string]interface{})["description"].(string)
+							if dataStr == "3" { //遇到主机切备机
+								global.SelfFlag = 2
+								break
+							} else {
+								continue
+							}
+						} else {
+							continue
+						}
+					} else {
+						continue
+					}
+				} else {
+					continue
+				}
+			} else {
+				continue
+			}
+			global.SelfFlag = 3
+		}
 		break
-	case 2:
+	case 2: //备机状态
 		client := &http.Client{}
 		for _, item := range global.SingletonNodeInfo.Clusters {
 			request, err := http.NewRequest("GET", "http://"+item.Address+"/api/IsMaster/", nil)
 			if err != nil {
-				common.Log("获取 地址：" + item.Address + "error1")
 				continue
 			} else {
 				response, err := client.Do(request)
 				if err != nil {
-					common.Log("获取 地址：" + item.Address + "error2")
 					continue
 				}
 				if response.StatusCode != 200 {
-					common.Log("获取 地址：" + item.Address + "error3")
 					continue
 				} else {
 					body, err := ioutil.ReadAll(response.Body)
 					if err != nil {
-						common.Log("获取 地址：" + item.Address + "error4")
 						continue
 					} else {
 						backJsonStr := string(body)
@@ -58,13 +85,12 @@ func MasterCheck() {
 						if json.Unmarshal([]byte(backJsonStr), &backJsonObj) != nil {
 							var dataStr = backJsonObj.data.(map[string]interface{})["description"].(string)
 							if dataStr == "3" { //遇到主机切备机
-								global.MasterFlag = 2
+								global.SelfFlag = 2
 								break
 							} else if dataStr == "2" { //遇到备机往下走
-								global.MasterFlag = -1
+								global.SelfFlag = -1
 							} else { //其他情况切异常
-								global.MasterFlag = -1
-								common.Log("获取 地址：" + item.Address + "节点信息失败5")
+								global.SelfFlag = -1
 								break
 							}
 						}
@@ -72,11 +98,11 @@ func MasterCheck() {
 				}
 			}
 		}
-	case 3: //自己是主机停止检查
+	case 3: //主机状态
 		break
 	default:
-		global.MasterFlag = -1
-		common.Log("当前机器状态" + strconv.Itoa(global.MasterFlag) + "异常 停止检测")
+		global.SelfFlag = -1
+		common.Log("当前机器状态" + strconv.Itoa(global.SelfFlag) + "异常 停止检测")
 	}
 
 }
@@ -184,7 +210,6 @@ func GetClusterData() {
 		}
 		response, err := client.Do(request)
 		if err != nil {
-			State[url] = -1
 			return
 		}
 		body, err := ioutil.ReadAll(response.Body)

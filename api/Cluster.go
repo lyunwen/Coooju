@@ -48,6 +48,10 @@ func IsMaster(c *gin.Context) {
 }
 
 func GetClusterData(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"code": "0", "msg": "", "data": new(models.Data).GetData()})
+	if data, err := new(models.Data).GetData(); err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": "99", "msg": "", "data": nil})
+	} else {
+		c.JSON(http.StatusOK, gin.H{"code": "0", "msg": "", "data": data})
+	}
 	return
 }
