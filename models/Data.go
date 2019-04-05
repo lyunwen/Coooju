@@ -3,13 +3,9 @@ package models
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/pkg/errors"
 	"io/ioutil"
 	"sync"
 )
-
-//主机使用或切主使用
-var dataSingleton *Data
 
 type Data struct {
 	Version     int
@@ -69,9 +65,9 @@ func (data *Data) SetData() (string, error) {
 		return "", err
 	}
 	if preData.Version < data.Version {
-		return "", errors.New("smaller version error")
+		return "smaller", nil
 	} else if preData.Version == data.Version {
-		return "equal", errors.New("equal version error")
+		return "equal", nil
 	} else {
 		dataJsonByte, err := json.Marshal(data)
 		if err != nil {

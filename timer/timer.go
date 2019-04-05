@@ -24,6 +24,10 @@ func MasterCheck() {
 	<-ch
 }
 
+func GetClusterData() {
+
+}
+
 //数据同步
 func SynchronyNodeData() {
 	var ch chan int

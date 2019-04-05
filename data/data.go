@@ -13,7 +13,7 @@ func Load() error {
 
 func dataInit() error {
 	var err error
-	global.MasterFlag = 1
+	global.SelfFlag = 1
 	global.SingletonNodeInfo, err = new(models.Data).GetData()
 	if err != nil {
 		return err

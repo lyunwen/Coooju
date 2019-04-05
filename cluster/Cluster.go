@@ -22,8 +22,8 @@ type ClusterBackObj struct {
 
 //非线程安全
 func MasterCheck() {
-	//-1:非正常状态，手动处理 1：待转备机或升主机 2：备机状态 3：主机状态
-	switch global.MasterFlag {
+	//// -1:异常态 1：初始态 2：备机状态 3：主机状态
+	switch global.SelfFlag {
 	case -1: //异常状态不检查
 		common.Log("当前机器状态" + strconv.Itoa(global.MasterFlag) + "异常 停止检测")
 		break
@@ -173,4 +173,32 @@ func isLocalIp(ip string) (bool, error) {
 		}
 	}
 	return false, nil
+}
+
+func GetClusterData() {
+	if global.SelfFlag == 2 { //备机才能同步
+		client := new(http.Client)
+		request, err := http.NewRequest("GET", "http://"+global.MasterUrl+"/api/SynchronyNodeData", nil)
+		if err != nil {
+			panic(err)
+		}
+		response, err := client.Do(request)
+		if err != nil {
+			State[url] = -1
+			return
+		}
+		body, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			///
+		}
+		bodyStr := string(body)
+		var dataObj *models.Data
+		if err = json.Unmarshal([]byte(bodyStr), &dataObj); err != nil {
+			global.SelfFlag = -1
+			return
+		} else if _, err := dataObj.SetData(); err != nil {
+			global.SelfFlag = -1
+			return
+		}
+	}
 }

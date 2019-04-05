@@ -43,6 +43,11 @@ func SynchronyNodeData(c *gin.Context) {
 }
 
 func IsMaster(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"code": "0", "msg": "", "data": global.MasterFlag})
+	c.JSON(http.StatusOK, gin.H{"code": "0", "msg": "", "data": global.SelfFlag})
+	return
+}
+
+func GetClusterData(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"code": "0", "msg": "", "data": new(models.Data).GetData()})
 	return
 }
