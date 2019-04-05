@@ -38,9 +38,7 @@ func (data *Data) GetData() (*Data, error) {
 	if err != nil {
 		return data, err
 	}
-	dataJsonByte = bytes.TrimPrefix(dataJsonByte, []byte("\xef\xbb\xbf"))
-	dataJsonStr := string(dataJsonByte)
-	err = json.Unmarshal([]byte(dataJsonStr), &data)
+	err = json.Unmarshal(bytes.TrimPrefix(dataJsonByte, []byte("\xef\xbb\xbf")), &data)
 	if err != nil {
 		return data, err
 	}

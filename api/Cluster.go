@@ -48,6 +48,11 @@ func IsMaster(c *gin.Context) {
 	return
 }
 
+func GetMasterAddress(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"code": strconv.Itoa(global.SelfFlag), "msg": "", "data": global.MasterUrl})
+	return
+}
+
 func GetClusterData(c *gin.Context) {
 	if data, err := new(models.Data).GetData(); err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": "99", "msg": "", "data": nil})

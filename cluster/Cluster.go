@@ -15,9 +15,9 @@ import (
 )
 
 type ClusterBackObj struct {
-	code string
-	msg  string
-	data interface{}
+	Code string
+	Msg  string
+	Data interface{}
 }
 
 //非线程安全 服务状态调整
@@ -26,8 +26,9 @@ func MasterCheck() {
 	switch global.SelfFlag {
 	case -1: //异常态
 		common.Log("服务状态调整 当前状态：初始态" + strconv.Itoa(global.SelfFlag))
-		break
-	case 1: //初始态
+	case 1:
+		fallthrough //初始态
+	case 2:
 		common.Log("服务状态调整 当前状态：初始态" + strconv.Itoa(global.SelfFlag))
 		client := &http.Client{}
 		for i, item := range global.SingletonNodeInfo.Clusters {
@@ -37,11 +38,12 @@ func MasterCheck() {
 				if err == nil && response.StatusCode == 200 {
 					body, err := ioutil.ReadAll(response.Body)
 					if err == nil {
-						backJsonStr := string(body)
+						bodyStr := string(body)
 						var backJsonObj ClusterBackObj
-						if json.Unmarshal([]byte(backJsonStr), &backJsonObj) != nil {
-							if backJsonObj.code == "3" { //遇到主机切备机
+						if err = json.Unmarshal([]byte(bodyStr), &backJsonObj); err == nil {
+							if backJsonObj.Code == "3" { //遇到主机切备机
 								global.SelfFlag = 2
+								global.MasterUrl = item.Address
 								break
 							}
 						}
@@ -50,47 +52,10 @@ func MasterCheck() {
 			}
 			if i+1 == len(global.SingletonNodeInfo.Clusters) {
 				global.SelfFlag = 3
-			}
-		}
-		break
-	case 2: //备机状态
-		client := &http.Client{}
-		for _, item := range global.SingletonNodeInfo.Clusters {
-			request, err := http.NewRequest("GET", "http://"+item.Address+"/api/IsMaster/", nil)
-			if err != nil {
-				continue
-			} else {
-				response, err := client.Do(request)
-				if err != nil {
-					continue
-				}
-				if response.StatusCode != 200 {
-					continue
-				} else {
-					body, err := ioutil.ReadAll(response.Body)
-					if err != nil {
-						continue
-					} else {
-						backJsonStr := string(body)
-						var backJsonObj ClusterBackObj
-						if json.Unmarshal([]byte(backJsonStr), &backJsonObj) != nil {
-							var dataStr = backJsonObj.data.(map[string]interface{})["description"].(string)
-							if dataStr == "3" { //遇到主机切备机
-								global.SelfFlag = 2
-								break
-							} else if dataStr == "2" { //遇到备机往下走
-								global.SelfFlag = -1
-							} else { //其他情况切异常
-								global.SelfFlag = -1
-								break
-							}
-						}
-					}
-				}
+				global.MasterUrl = global.LocalUrl
 			}
 		}
 	case 3: //主机状态
-		break
 	default:
 		global.SelfFlag = -1
 		common.Log("当前机器状态" + strconv.Itoa(global.SelfFlag) + "异常 停止检测")
@@ -151,7 +116,7 @@ func synchronyNodeData(data *models.Data, url string) {
 		State[url] = 5
 		return
 	}
-	if backObj.code != "0" {
+	if backObj.Code != "0" {
 		State[url] = 6
 		return
 	}

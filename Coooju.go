@@ -12,18 +12,13 @@ import (
 )
 
 func main() {
-	err := beforeStart()
-	if err != nil {
-		fmt.Println("beforeStart error")
-		return
-	}
+	beforeStart()
 
-	//cluster.SynchronyNodeData()
-
-	router := gin.Default()                                                //api路由
-	router.Group("/api/SynchronyNodeData").GET("/", api.SynchronyNodeData) //主同步备接口
-	router.Group("/api/IsMaster").GET("/", api.IsMaster)                   //备机找主机
-	router.Group("/api/cluster/getData").GET("/", api.GetClusterData)      //获取主机数据
+	router := gin.Default()                                                      //api路由
+	router.Group("/api/SynchronyNodeData").GET("/", api.SynchronyNodeData)       //主同步备接口
+	router.Group("/api/IsMaster").GET("/", api.IsMaster)                         //备机找主机
+	router.Group("/api/cluster/getData").GET("/", api.GetClusterData)            //备机找主机
+	router.Group("/api/cluster/getMasterAddress").GET("/", api.GetMasterAddress) //获取主机地址
 	//router.Group("/api/getAwards").GET("/", api.GetAwards)
 	//router.Group("/api/initData").GET("/", api.InitData)
 	//router.Group("/api/getNextAction").GET("/", api.GetNextAction)
@@ -47,17 +42,16 @@ func main() {
 		fmt.Println("start error:" + err.Error())
 		return
 	}
-	//cluster.MasterCheck()
+
 	go afterStart()
+	global.LocalUrl = url
 	_ = router.Run(url)
 }
 
-func beforeStart() error {
-	err := data.Load()
-	if err != nil {
-		return err
+func beforeStart() {
+	if err := data.Load(); err != nil {
+		panic(err)
 	}
-	return nil
 }
 
 func afterStart() {

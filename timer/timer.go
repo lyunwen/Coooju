@@ -7,7 +7,6 @@ import (
 
 func Load() {
 	MasterCheck()
-	//SynchronyNodeData()
 }
 
 //主机检测
@@ -25,7 +24,16 @@ func MasterCheck() {
 }
 
 func GetClusterData() {
-
+	var ch chan int
+	//定时任务
+	ticker := time.NewTicker(time.Second * 10)
+	go func() {
+		for range ticker.C {
+			cluster.GetClusterData()
+		}
+		ch <- 1
+	}()
+	<-ch
 }
 
 //数据同步
