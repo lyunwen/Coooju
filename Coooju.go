@@ -47,8 +47,8 @@ func main() {
 		fmt.Println("start error:" + err.Error())
 		return
 	}
-	_ = router.Run(url)
 	afterStart()
+	_ = router.Run(url)
 }
 
 func beforeStart() error {

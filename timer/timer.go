@@ -7,7 +7,7 @@ import (
 
 func Load() {
 	MasterCheck()
-	SynchronyNodeData()
+	//SynchronyNodeData()
 }
 
 //主机检测
