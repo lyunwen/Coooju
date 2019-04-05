@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"net/url"
+	"strconv"
 )
 
 func SynchronyNodeData(c *gin.Context) {
@@ -43,7 +44,7 @@ func SynchronyNodeData(c *gin.Context) {
 }
 
 func IsMaster(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"code": "0", "msg": "", "data": global.SelfFlag})
+	c.JSON(http.StatusOK, gin.H{"code": strconv.Itoa(global.SelfFlag), "msg": "", "data": nil})
 	return
 }
 

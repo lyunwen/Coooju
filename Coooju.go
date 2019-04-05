@@ -47,7 +47,8 @@ func main() {
 		fmt.Println("start error:" + err.Error())
 		return
 	}
-	afterStart()
+	//cluster.MasterCheck()
+	go afterStart()
 	_ = router.Run(url)
 }
 

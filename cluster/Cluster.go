@@ -22,7 +22,7 @@ type ClusterBackObj struct {
 
 //非线程安全 服务状态调整
 func MasterCheck() {
-	//// -1:异常态 1：初始态 2：备机状态 3：主机状态
+	// -1:异常态 1：初始态 2：备机状态 3：主机状态
 	switch global.SelfFlag {
 	case -1: //异常态
 		common.Log("服务状态调整 当前状态：初始态" + strconv.Itoa(global.SelfFlag))
@@ -40,8 +40,7 @@ func MasterCheck() {
 						backJsonStr := string(body)
 						var backJsonObj ClusterBackObj
 						if json.Unmarshal([]byte(backJsonStr), &backJsonObj) != nil {
-							var dataStr = backJsonObj.data.(map[string]interface{})["description"].(string)
-							if dataStr == "3" { //遇到主机切备机
+							if backJsonObj.code == "3" { //遇到主机切备机
 								global.SelfFlag = 2
 								break
 							}
