@@ -42,6 +42,7 @@ func MasterCheck() {
 						var backJsonObj ClusterBackObj
 						if err = json.Unmarshal([]byte(bodyStr), &backJsonObj); err == nil {
 							if backJsonObj.Code == "3" { //遇到主机切备机
+								common.Log("切备机")
 								global.SelfFlag = 2
 								global.MasterUrl = item.Address
 								break
@@ -51,6 +52,7 @@ func MasterCheck() {
 				}
 			}
 			if i+1 == len(global.SingletonNodeInfo.Clusters) {
+				common.Log("切主机")
 				global.SelfFlag = 3
 				global.MasterUrl = global.LocalUrl
 			}
