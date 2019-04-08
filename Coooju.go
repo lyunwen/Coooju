@@ -53,7 +53,7 @@ func main() {
 
 func beforeStart() {
 	if err := data.Load(); err != nil {
-		panic(err)
+		log.Error("启动异常：" + err.Error())
 	}
 }
 
