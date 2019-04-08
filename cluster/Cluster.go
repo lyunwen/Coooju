@@ -24,11 +24,7 @@ func MasterCheck() {
 	// -1:异常态 1：初始态 2：备机状态 3：主机状态
 	switch global.SelfFlag {
 	case -1: //异常态
-		log.Default("服务状态调整 当前状态：初始态" + strconv.Itoa(global.SelfFlag))
-	case 1:
-		fallthrough //初始态
-	case 2:
-		log.Default("服务状态调整 当前状态：初始态" + strconv.Itoa(global.SelfFlag))
+	case 1: //初始态
 		client := &http.Client{}
 		for i, item := range global.SingletonNodeInfo.Clusters {
 			request, err := http.NewRequest("GET", "http://"+item.Address+"/api/IsMaster/", nil)
@@ -41,7 +37,7 @@ func MasterCheck() {
 						var backJsonObj ClusterBackObj
 						if err = json.Unmarshal([]byte(bodyStr), &backJsonObj); err == nil {
 							if backJsonObj.Code == "3" { //遇到主机切备机
-								log.Default("切备机")
+								log.Default("初始态->备机状态")
 								global.SelfFlag = 2
 								global.MasterUrl = item.Address
 								break
@@ -51,7 +47,32 @@ func MasterCheck() {
 				}
 			}
 			if i+1 == len(global.SingletonNodeInfo.Clusters) {
-				log.Default("切主机")
+				log.Default("初始态->主机状态")
+				global.SelfFlag = 3
+				global.MasterUrl = global.LocalUrl
+			}
+		}
+	case 2:
+		client := &http.Client{}
+		for i, item := range global.SingletonNodeInfo.Clusters {
+			request, err := http.NewRequest("GET", "http://"+item.Address+"/api/IsMaster/", nil)
+			if err == nil {
+				response, err := client.Do(request)
+				if err == nil && response.StatusCode == 200 {
+					body, err := ioutil.ReadAll(response.Body)
+					if err == nil {
+						bodyStr := string(body)
+						var backJsonObj ClusterBackObj
+						if err = json.Unmarshal([]byte(bodyStr), &backJsonObj); err == nil {
+							if backJsonObj.Code != "3" { //遇到主机切备机
+								break
+							}
+						}
+					}
+				}
+			}
+			if i+1 == len(global.SingletonNodeInfo.Clusters) {
+				log.Default("备机->主机")
 				global.SelfFlag = 3
 				global.MasterUrl = global.LocalUrl
 			}
