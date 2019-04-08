@@ -1,7 +1,7 @@
 package sockects
 
 import (
-	"../common"
+	"../common/log"
 	"github.com/gorilla/websocket"
 	"net/http"
 	"time"
@@ -33,12 +33,13 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 	//gin通过协程调用该handler函数，一旦退出函数，ws会被主动销毁
 	for {
 		mt, message, err := conn.ReadMessage()
-		common.Log("接收消息：" + string(message))
+		log.Default("接收消息：" + string(message))
+
 		if err != nil {
 			break
 		}
 		for _, item := range conns {
-			common.Log("发送消息：" + string(message))
+			log.Default("发送消息：" + string(message))
 			err = item.WriteMessage(mt, message)
 			if err != nil {
 				continue

@@ -1,7 +1,7 @@
 package cluster
 
 import (
-	"../common"
+	"../common/log"
 	"../global"
 	"../models"
 	"encoding/json"
@@ -25,11 +25,11 @@ func MasterCheck() {
 	// -1:异常态 1：初始态 2：备机状态 3：主机状态
 	switch global.SelfFlag {
 	case -1: //异常态
-		common.Log("服务状态调整 当前状态：初始态" + strconv.Itoa(global.SelfFlag))
+		log.Default("服务状态调整 当前状态：初始态" + strconv.Itoa(global.SelfFlag))
 	case 1:
 		fallthrough //初始态
 	case 2:
-		common.Log("服务状态调整 当前状态：初始态" + strconv.Itoa(global.SelfFlag))
+		log.Default("服务状态调整 当前状态：初始态" + strconv.Itoa(global.SelfFlag))
 		client := &http.Client{}
 		for i, item := range global.SingletonNodeInfo.Clusters {
 			request, err := http.NewRequest("GET", "http://"+item.Address+"/api/IsMaster/", nil)
@@ -42,7 +42,7 @@ func MasterCheck() {
 						var backJsonObj ClusterBackObj
 						if err = json.Unmarshal([]byte(bodyStr), &backJsonObj); err == nil {
 							if backJsonObj.Code == "3" { //遇到主机切备机
-								common.Log("切备机")
+								log.Default("切备机")
 								global.SelfFlag = 2
 								global.MasterUrl = item.Address
 								break
@@ -52,7 +52,7 @@ func MasterCheck() {
 				}
 			}
 			if i+1 == len(global.SingletonNodeInfo.Clusters) {
-				common.Log("切主机")
+				log.Default("切主机")
 				global.SelfFlag = 3
 				global.MasterUrl = global.LocalUrl
 			}
@@ -60,7 +60,7 @@ func MasterCheck() {
 	case 3: //主机状态
 	default:
 		global.SelfFlag = -1
-		common.Log("当前机器状态" + strconv.Itoa(global.SelfFlag) + "异常 停止检测")
+		log.Error("当前机器状态" + strconv.Itoa(global.SelfFlag) + "异常 停止检测")
 	}
 
 }
