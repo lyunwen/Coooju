@@ -9,7 +9,6 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
-	url2 "net/url"
 	"strconv"
 	"strings"
 )
@@ -65,67 +64,6 @@ func MasterCheck() {
 
 }
 
-func SynchronyNodeData() {
-	for _, item := range global.SingletonNodeInfo.Clusters {
-		synchronyNodeData(global.SingletonNodeInfo, item.Address)
-		//if err != nil {
-		//	_ = common.Log(time.Now().Format("2005-01-02 15:04:05") + "synchronyNodeData error:" + err.Error())
-		//}
-		//switch result {
-		//case "ok":
-		//	return
-		//case "smaller":
-		//	_ = common.Log(time.Now().Format("2005-01-02 15:04:05") + "smaller smaller error:" + err.Error())
-		//	return
-		//case "equal":
-		//	_ = common.Log(time.Now().Format("2005-01-02 15:04:05") + "equal version error:" + err.Error())
-		//	return
-		//default:
-		//	_ = common.Log(time.Now().Format("2005-01-02 15:04:05") + "synchronyNodeData result error:" + err.Error())
-		//	return
-		//}
-	}
-}
-
-// 地址/状态 1 可用 2网络不可用 4系统不可用 5系统内部未知异常 6系统内部已知异常 7同步成功 8无需同步 9不能同步
-var State = map[string]int{}
-
-func synchronyNodeData(data *models.Data, url string) {
-	client := new(http.Client)
-	dataJsonBytes := make([]byte, 1024)
-	dataJsonBytes, err := json.Marshal(data)
-	if err != nil {
-		panic(err)
-	}
-	dataJsonStr := string(dataJsonBytes)
-	request, err := http.NewRequest("GET", "http://"+url+"/api/SynchronyNodeData?data="+url2.PathEscape(dataJsonStr), nil)
-	if err != nil {
-		panic(err)
-	}
-	response, err := client.Do(request)
-	if err != nil {
-		State[url] = 2
-		return
-	}
-	if response.StatusCode != 200 {
-		State[url] = 5
-		return
-	}
-	body, _ := ioutil.ReadAll(response.Body)
-	bodyStr := string(body)
-	var backObj ClusterBackObj
-	if err := json.Unmarshal([]byte(bodyStr), &backObj); err != nil {
-		State[url] = 5
-		return
-	}
-	if backObj.Code != "0" {
-		State[url] = 6
-		return
-	}
-	State[url] = 7
-	return
-}
-
 func GetAvailablePortAddress() (string, error) {
 	for _, item := range global.SingletonNodeInfo.Clusters {
 		isLocalIp, err := isLocalIp(strings.Split(item.Address, ":")[0])
@@ -162,17 +100,20 @@ func isLocalIp(ip string) (bool, error) {
 func GetClusterData() {
 	if global.SelfFlag == 2 { //备机才能同步
 		client := new(http.Client)
-		request, err := http.NewRequest("GET", "http://"+global.MasterUrl+"/api/SynchronyNodeData", nil)
+		request, err := http.NewRequest("GET", "http://"+global.MasterUrl+"/api/getData", nil)
 		if err != nil {
-			panic(err)
+			log.Error("拉取数据异常:" + err.Error())
+			return
 		}
 		response, err := client.Do(request)
 		if err != nil {
+			log.Error("拉取数据异常:" + err.Error())
 			return
 		}
 		body, err := ioutil.ReadAll(response.Body)
 		if err != nil {
-			///
+			log.Error("拉取数据异常:" + err.Error())
+			return
 		}
 		bodyStr := string(body)
 		var dataObj *models.Data

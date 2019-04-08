@@ -3,6 +3,7 @@ package main
 import (
 	"./api"
 	"./cluster"
+	"./common/log"
 	"./data"
 	"./global"
 	"./sockects"
@@ -13,6 +14,7 @@ import (
 )
 
 func main() {
+	log.Default("启动")
 	beforeStart()
 
 	router := gin.Default()                                                      //api路由

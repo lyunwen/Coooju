@@ -7,6 +7,7 @@ import (
 
 func Load() {
 	MasterCheck()
+	GetClusterData()
 }
 
 //主机检测
