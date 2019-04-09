@@ -56,7 +56,7 @@ func MasterCheck() {
 		client := &http.Client{}
 		for i, item := range global.SingletonNodeInfo.Clusters {
 			request, err := http.NewRequest("GET", "http://"+item.Address+"/api/IsMaster/", nil)
-			if err == nil {
+			if err == nil && item.Address != global.LocalUrl {
 				response, err := client.Do(request)
 				if err == nil && response.StatusCode == 200 {
 					body, err := ioutil.ReadAll(response.Body)
@@ -64,7 +64,7 @@ func MasterCheck() {
 						bodyStr := string(body)
 						var backJsonObj ClusterBackObj
 						if err = json.Unmarshal([]byte(bodyStr), &backJsonObj); err == nil {
-							if backJsonObj.Code != "3" { //遇到主机切备机
+							if backJsonObj.Code == "3" { //遇到主机则正常
 								break
 							}
 						}
@@ -72,7 +72,7 @@ func MasterCheck() {
 				}
 			}
 			if i+1 == len(global.SingletonNodeInfo.Clusters) {
-				log.Default("备机->主机")
+				log.Default("备机状态->主机状态")
 				global.SelfFlag = 3
 				global.MasterUrl = global.LocalUrl
 			}
