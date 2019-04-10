@@ -15,7 +15,7 @@ import (
 
 func main() {
 	log.Default("启动")
-
+	data.Load()
 	router := gin.Default()                                                      //api路由       //主同步备接口
 	router.Group("/api/IsMaster").GET("/", api.IsMaster)                         //备机找主机
 	router.Group("/api/cluster/getData").GET("/", api.GetData)                   //备机找主机
@@ -35,7 +35,6 @@ func main() {
 		return
 	}
 	global.LocalUrl = url
-	data.Load()
 	go timer.Load()
 	_ = router.Run(url)
 }
