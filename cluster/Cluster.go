@@ -82,7 +82,6 @@ func MasterCheck() {
 		global.SelfFlag = -1
 		log.Error("当前机器状态" + strconv.Itoa(global.SelfFlag) + "异常 停止检测")
 	}
-
 }
 
 func GetAvailablePortAddress() (string, error) {
@@ -118,32 +117,41 @@ func isLocalIp(ip string) (bool, error) {
 	return false, nil
 }
 
-func GetClusterData() {
-	if global.SelfFlag == 2 { //备机才能同步
+//获取数据更新方法
+func SynchronyData() error {
+	if global.SelfFlag == 2 {
 		client := new(http.Client)
 		request, err := http.NewRequest("GET", "http://"+global.MasterUrl+"/api/getData", nil)
 		if err != nil {
-			log.Error("拉取数据异常:" + err.Error())
-			return
+			return err
 		}
 		response, err := client.Do(request)
 		if err != nil {
-			log.Error("拉取数据异常:" + err.Error())
-			return
+			return err
 		}
 		body, err := ioutil.ReadAll(response.Body)
 		if err != nil {
-			log.Error("拉取数据异常:" + err.Error())
-			return
+			return err
 		}
 		bodyStr := string(body)
-		var dataObj *models.Data
-		if err = json.Unmarshal([]byte(bodyStr), &dataObj); err != nil {
-			global.SelfFlag = -1
-			return
-		} else if _, err := dataObj.SetData(); err != nil {
-			global.SelfFlag = -1
-			return
+		var masterData *models.Data
+		if err = json.Unmarshal([]byte(bodyStr), &masterData); err != nil {
+			return err
 		}
+		var localData = new(models.Data).GetData()
+		localPre, localVersion := localData.GetVersionInfo()
+		masterPre, masterVersion := masterData.GetVersionInfo()
+		if localPre == masterPre {
+			if localVersion <= masterVersion {
+				masterData.SetData()
+				return nil
+			} else {
+				return errors.New("local version bigger than master version")
+			}
+		} else {
+			return errors.New("local pre not equal master pre")
+		}
+	} else {
+		return errors.New("only SelfFlag=2 can be SynchronyData")
 	}
 }

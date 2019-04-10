@@ -20,7 +20,8 @@ func main() {
 	router := gin.Default()                                                      //api路由
 	router.Group("/api/SynchronyNodeData").GET("/", api.SynchronyNodeData)       //主同步备接口
 	router.Group("/api/IsMaster").GET("/", api.IsMaster)                         //备机找主机
-	router.Group("/api/cluster/getData").GET("/", api.GetClusterData)            //备机找主机
+	router.Group("/api/cluster/getData").GET("/", api.GetData)                   //备机找主机
+	router.Group("/api/cluster/syncData").GET("/", api.SyncData)                 //备机找主机
 	router.Group("/api/cluster/getMasterAddress").GET("/", api.GetMasterAddress) //获取主机地址
 	//router.Group("/api/getAwards").GET("/", api.GetAwards)
 	//router.Group("/api/initData").GET("/", api.InitData)
@@ -52,9 +53,7 @@ func main() {
 }
 
 func beforeStart() {
-	if err := data.Load(); err != nil {
-		log.Error("启动异常：" + err.Error())
-	}
+	data.Load()
 }
 
 func afterStart() {

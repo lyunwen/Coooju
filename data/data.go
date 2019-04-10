@@ -5,19 +5,17 @@ import (
 	"../models"
 )
 
-func Load() error {
-	var err error
-	err = dataInit()
-	return err
+func Load() {
+	dataInit()
 }
 
-func dataInit() error {
-	var err error
+func dataInit() {
 	global.SelfFlag = 1
-	global.SingletonNodeInfo, err = new(models.Data).GetData()
+	var err error
+	global.SingletonNodeInfo = new(models.Data).GetData()
 	if err != nil {
-		return err
+		panic(err)
 	}
-	global.NodeStatus = 2
-	return err
+	global.SelfFlag = 1
+	global.CuCluaster = nil
 }

@@ -6,12 +6,12 @@ import (
 )
 
 func Load() {
-	MasterCheck()
-	GetClusterData()
+	MasterCheckLoop()
+	SynchronyDataLoop()
 }
 
 //主机检测
-func MasterCheck() {
+func MasterCheckLoop() {
 	var ch chan int
 	//定时任务
 	ticker := time.NewTicker(time.Second * 10)
@@ -24,13 +24,13 @@ func MasterCheck() {
 	<-ch
 }
 
-func GetClusterData() {
+func SynchronyDataLoop() {
 	var ch chan int
 	//定时任务
 	ticker := time.NewTicker(time.Second * 10)
 	go func() {
 		for range ticker.C {
-			cluster.GetClusterData()
+			cluster.SynchronyData()
 		}
 		ch <- 1
 	}()
