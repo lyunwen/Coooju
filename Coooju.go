@@ -16,8 +16,7 @@ import (
 func main() {
 	log.Default("启动")
 
-	router := gin.Default()                                                      //api路由
-	router.Group("/api/SynchronyNodeData").GET("/", api.SynchronyNodeData)       //主同步备接口
+	router := gin.Default()                                                      //api路由       //主同步备接口
 	router.Group("/api/IsMaster").GET("/", api.IsMaster)                         //备机找主机
 	router.Group("/api/cluster/getData").GET("/", api.GetData)                   //备机找主机
 	router.Group("/api/cluster/syncData").GET("/", api.SyncData)                 //备机找主机
