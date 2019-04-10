@@ -2,6 +2,7 @@ package timer
 
 import (
 	"../cluster"
+	"../common/log"
 	"time"
 )
 
@@ -30,7 +31,10 @@ func SynchronyDataLoop() {
 	ticker := time.NewTicker(time.Second * 10)
 	go func() {
 		for range ticker.C {
-			cluster.SynchronyData()
+			err := cluster.SynchronyData()
+			if err != nil {
+				log.Error(err.Error())
+			}
 		}
 		ch <- 1
 	}()

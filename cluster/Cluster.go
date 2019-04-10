@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type ClusterBackObj struct {
@@ -117,7 +118,7 @@ func isLocalIp(ip string) (bool, error) {
 	return false, nil
 }
 
-//获取数据更新方法
+//获取数据更新方法 非线程安全
 func SynchronyData() error {
 	if global.SelfFlag == 2 {
 		client := new(http.Client)
@@ -147,15 +148,15 @@ func SynchronyData() error {
 		if err != nil {
 			return err
 		}
-		if localPre == masterPre {
-			if localVersion <= masterVersion {
-				masterData.SetData()
-				return nil
-			} else {
-				return errors.New("local version bigger than master version")
-			}
+		if localPre == masterPre && localVersion <= masterVersion { //前缀一样且版本小于等于主机版本
+			masterData.SetData()
+			return nil
 		} else {
-			return errors.New("local pre not equal master pre")
+			localData.CopyData(strconv.FormatInt(time.Now().Unix(), 10))
+			errMsg := "local version:  " + localData.Version + "not equal master version: " + masterData.Version
+			log.Error(errMsg)
+			masterData.SetData()
+			return nil
 		}
 	} else {
 		return errors.New("only SelfFlag=2 can be SynchronyData")

@@ -76,24 +76,30 @@ func (data *Data) GetDataFromJsonStr(dataJsonStr string) (*Data, error) {
 //线程安全
 var mutex sync.Mutex
 
-func (data *Data) SetData() string {
+func (data *Data) SetData() {
 	mutex.Lock()
-	preData := new(Data).GetData()
-	if preData.Version < data.Version {
-		return "smaller"
-	} else if preData.Version == data.Version {
-		return "equal"
-	} else {
-		dataJsonByte, err := json.Marshal(data)
-		if err != nil {
-			return ""
-		}
-		dataJsonStr := string(dataJsonByte)
-		err = ioutil.WriteFile("data.json", []byte(dataJsonStr), 0644)
-		if err != nil {
-			panic(err)
-		}
-		mutex.Unlock()
-		return "ok"
+	dataJsonByte, err := json.Marshal(data)
+	if err != nil {
+		panic(err)
 	}
+	dataJsonStr := string(dataJsonByte)
+	err = ioutil.WriteFile("data.json", []byte(dataJsonStr), 0644)
+	if err != nil {
+		panic(err)
+	}
+	mutex.Unlock()
+}
+
+func (data *Data) CopyData(fileName string) {
+	mutex.Lock()
+	dataJsonByte, err := json.Marshal(data)
+	if err != nil {
+		panic(err)
+	}
+	dataJsonStr := string(dataJsonByte)
+	err = ioutil.WriteFile(fileName+".json", []byte(dataJsonStr), 0644)
+	if err != nil {
+		panic(err)
+	}
+	mutex.Unlock()
 }
