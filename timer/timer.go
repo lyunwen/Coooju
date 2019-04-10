@@ -3,12 +3,13 @@ package timer
 import (
 	"../cluster"
 	"../common/log"
+	"../global"
 	"time"
 )
 
 func Load() {
-	MasterCheckLoop()
-	SynchronyDataLoop()
+	go MasterCheckLoop()
+	go SynchronyDataLoop()
 }
 
 //主机检测
@@ -31,9 +32,12 @@ func SynchronyDataLoop() {
 	ticker := time.NewTicker(time.Second * 10)
 	go func() {
 		for range ticker.C {
-			err := cluster.SynchronyData()
-			if err != nil {
-				log.Error(err.Error())
+			log.Default("SynchronyDataLoop~")
+			if global.SelfFlag == 2 {
+				err := cluster.SynchronyData()
+				if err != nil {
+					log.Error(err.Error())
+				}
 			}
 		}
 		ch <- 1

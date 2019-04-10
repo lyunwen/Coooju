@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 )
 
 type ClusterBackObj struct {
@@ -38,9 +37,14 @@ func MasterCheck() {
 						var backJsonObj ClusterBackObj
 						if err = json.Unmarshal([]byte(bodyStr), &backJsonObj); err == nil {
 							if backJsonObj.Code == "3" { //遇到主机切备机
-								log.Default("初始态->备机状态")
-								global.SelfFlag = 2
 								global.MasterUrl = item.Address
+								if err := SynchronyData(); err != nil {
+									log.Default("初始态->异常态 数据同步不成功:" + err.Error())
+									global.SelfFlag = -1
+								} else {
+									log.Default("初始态->备机状态")
+									global.SelfFlag = 2
+								}
 								break
 							}
 						}
@@ -48,9 +52,9 @@ func MasterCheck() {
 				}
 			}
 			if i+1 == len(global.SingletonNodeInfo.Clusters) {
-				log.Default("初始态->主机状态")
-				global.SelfFlag = 3
 				global.MasterUrl = global.LocalUrl
+				global.SelfFlag = 3
+				log.Default("初始态->主机状态")
 			}
 		}
 	case 2:
@@ -118,47 +122,26 @@ func isLocalIp(ip string) (bool, error) {
 	return false, nil
 }
 
-//获取数据更新方法 非线程安全
+//获取master数据更新本地
 func SynchronyData() error {
-	if global.SelfFlag == 2 {
-		client := new(http.Client)
-		request, err := http.NewRequest("GET", "http://"+global.MasterUrl+"/api/cluster/getData", nil)
-		if err != nil {
-			return err
-		}
-		response, err := client.Do(request)
-		if err != nil {
-			return err
-		}
-		body, err := ioutil.ReadAll(response.Body)
-		if err != nil {
-			return err
-		}
-		bodyStr := string(body)
-		var masterData *models.Data
-		if err = json.Unmarshal([]byte(bodyStr), &masterData); err != nil {
-			return err
-		}
-		var localData = new(models.Data).GetData()
-		localPre, localVersion, err := localData.GetVersionInfo()
-		if err != nil {
-			return err
-		}
-		masterPre, masterVersion, err := masterData.GetVersionInfo()
-		if err != nil {
-			return err
-		}
-		if localPre == masterPre && localVersion <= masterVersion { //前缀一样且版本小于等于主机版本
-			masterData.SetData()
-			return nil
-		} else {
-			localData.CopyData(strconv.FormatInt(time.Now().Unix(), 10))
-			errMsg := "local version:  " + localData.Version + "not equal master version: " + masterData.Version
-			log.Error(errMsg)
-			masterData.SetData()
-			return nil
-		}
-	} else {
-		return errors.New("only SelfFlag=2 can be SynchronyData")
+	client := new(http.Client)
+	request, err := http.NewRequest("GET", "http://"+global.MasterUrl+"/api/cluster/getData", nil)
+	if err != nil {
+		return err
 	}
+	response, err := client.Do(request)
+	if err != nil {
+		return err
+	}
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return err
+	}
+	bodyStr := string(body)
+	var masterData *models.Data
+	if err = json.Unmarshal([]byte(bodyStr), &masterData); err != nil {
+		return err
+	}
+	masterData.SetData()
+	return nil
 }
