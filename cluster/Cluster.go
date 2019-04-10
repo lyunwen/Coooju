@@ -121,7 +121,7 @@ func isLocalIp(ip string) (bool, error) {
 func SynchronyData() error {
 	if global.SelfFlag == 2 {
 		client := new(http.Client)
-		request, err := http.NewRequest("GET", "http://"+global.MasterUrl+"/api/getData", nil)
+		request, err := http.NewRequest("GET", "http://"+global.MasterUrl+"/api/cluster/getData", nil)
 		if err != nil {
 			return err
 		}
@@ -139,8 +139,14 @@ func SynchronyData() error {
 			return err
 		}
 		var localData = new(models.Data).GetData()
-		localPre, localVersion := localData.GetVersionInfo()
-		masterPre, masterVersion := masterData.GetVersionInfo()
+		localPre, localVersion, err := localData.GetVersionInfo()
+		if err != nil {
+			return err
+		}
+		masterPre, masterVersion, err := masterData.GetVersionInfo()
+		if err != nil {
+			return err
+		}
 		if localPre == masterPre {
 			if localVersion <= masterVersion {
 				masterData.SetData()
