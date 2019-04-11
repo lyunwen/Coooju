@@ -30,24 +30,29 @@
   ],
   "Clusters": [
     {
-      "Level": 4,
+      "Level": 1,
       "Name": "Cluster1",
       "Address": "10.41.69.40:6001"
     },
     {
-      "Level": 3,
+      "Level": 2,
       "Name": "Cluster2",
       "Address": "10.41.69.40:6002"
     },
     {
-      "Level": 2,
+      "Level": 3,
       "Name": "Cluster3",
       "Address": "10.41.69.40:6003"
     },
     {
-      "Level": 1,
+      "Level": 4,
       "Name": "Cluster4",
       "Address": "10.41.69.40:6004"
+    },
+    {
+      "Level": 5,
+      "Name": "Cluster4",
+      "Address": "10.41.69.40:6005"
     }
   ]
 }
