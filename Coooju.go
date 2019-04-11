@@ -5,7 +5,6 @@ import (
 	"./cluster"
 	"./common/log"
 	"./data"
-	"./global"
 	"./sockects"
 	"./timer"
 	"fmt"
@@ -14,7 +13,7 @@ import (
 )
 
 func main() {
-	log.Default("==============================启动==============================")
+	log.Warn("==============================启动==============================")
 	data.Load()
 	router := gin.Default()                                                      //api路由       //主同步备接口
 	router.Group("/api/IsMaster").GET("/", api.IsMaster)                         //备机找主机
@@ -29,12 +28,11 @@ func main() {
 	//静态文件路由
 	router.Static("/wwwroot", "./wwwroot")
 
-	url, err := cluster.GetAvailablePortAddress()
+	var url, err = cluster.GetAvailablePortAddress()
 	if err != nil {
 		fmt.Println("start error:" + err.Error())
 		return
 	}
-	global.LocalUrl = url
 	go timer.Load()
 	_ = router.Run(url)
 }

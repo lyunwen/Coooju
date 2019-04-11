@@ -10,7 +10,7 @@ import (
 )
 
 func IsMaster(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"code": strconv.Itoa(global.SelfFlag), "msg": "", "data": nil})
+	c.JSON(http.StatusOK, gin.H{"code": strconv.Itoa(global.SelfFlag), "msg": "", "data": global.CuCluster})
 }
 
 func GetMasterAddress(c *gin.Context) {

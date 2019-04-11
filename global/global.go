@@ -7,7 +7,6 @@ var (
 	Errors            []error
 	SingletonNodeInfo *models.Data
 	MasterUrl         string
-	LocalUrl          string
-	CuCluaster        *models.Cluster
+	CuCluster         *models.Cluster
 	SelfFlag          int // -1:异常态 1：初始态 2：备机状态 3：主机状态
 )

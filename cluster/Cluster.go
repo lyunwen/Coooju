@@ -20,7 +20,7 @@ type ClusterBackObj struct {
 }
 
 //非线程安全 服务状态调整
-func MasterCheck() {
+func MasterCheck() error {
 	// -1:异常态 1：初始态 2：备机状态 3：主机状态
 	switch global.SelfFlag {
 	case -1: //异常态
@@ -39,10 +39,10 @@ func MasterCheck() {
 							if backJsonObj.Code == "3" { //遇到主机切备机
 								global.MasterUrl = item.Address
 								if err := SynchronyData(); err != nil {
-									log.Default("初始态->异常态 数据同步不成功:" + err.Error())
+									log.Warn("初始态->异常态 数据同步不成功:" + err.Error())
 									global.SelfFlag = -1
 								} else {
-									log.Default("初始态->备机状态")
+									log.Warn("初始态->备机状态")
 									global.SelfFlag = 2
 								}
 								break
@@ -52,16 +52,16 @@ func MasterCheck() {
 				}
 			}
 			if i+1 == len(global.SingletonNodeInfo.Clusters) {
-				global.MasterUrl = global.LocalUrl
+				global.MasterUrl = global.CuCluster.Address
 				global.SelfFlag = 3
-				log.Default("初始态->主机状态")
+				log.Warn("初始态->主机状态")
 			}
 		}
-	case 2:
+	case 2: //备机状态
 		client := &http.Client{}
 		for i, item := range global.SingletonNodeInfo.Clusters {
 			request, err := http.NewRequest("GET", "http://"+item.Address+"/api/IsMaster/", nil)
-			if err == nil && item.Address != global.LocalUrl {
+			if err == nil && item.Address != global.CuCluster.Address {
 				response, err := client.Do(request)
 				if err == nil && response.StatusCode == 200 {
 					body, err := ioutil.ReadAll(response.Body)
@@ -77,15 +77,47 @@ func MasterCheck() {
 				}
 			}
 			if i+1 == len(global.SingletonNodeInfo.Clusters) {
-				log.Default("备机状态->主机状态")
+				log.Warn("备机状态->主机状态")
 				global.SelfFlag = 3
-				global.MasterUrl = global.LocalUrl
+				global.MasterUrl = global.CuCluster.Address
 			}
 		}
 	case 3: //主机状态
+		client := &http.Client{}
+		for _, item := range global.SingletonNodeInfo.Clusters {
+			request, err := http.NewRequest("GET", "http://"+item.Address+"/api/IsMaster/", nil)
+			if err == nil && item.Address != global.CuCluster.Address {
+				response, err := client.Do(request)
+				if err == nil && response.StatusCode == 200 {
+					body, err := ioutil.ReadAll(response.Body)
+					if err == nil {
+						bodyStr := string(body)
+						var dataMsg json.RawMessage
+						var backJsonObj = ClusterBackObj{Data: &dataMsg}
+						if err = json.Unmarshal([]byte(bodyStr), &backJsonObj); err == nil {
+							if backJsonObj.Code == "3" { //主机遇主机处理
+								var otherMaster models.Cluster
+								if err = json.Unmarshal(dataMsg, &otherMaster); err != nil {
+									return err
+								}
+								log.Warn("当前master【address:" + global.CuCluster.Address + " level:" + strconv.Itoa(global.CuCluster.Level) + " name:" + global.CuCluster.Name + "】 发现 另外 master【address:" + otherMaster.Address + " level:" + strconv.Itoa(otherMaster.Level) + " name:" + otherMaster.Name + "】")
+								if otherMaster.Level > global.CuCluster.Level {
+									global.SelfFlag = 2
+									global.MasterUrl = otherMaster.Address
+									log.Warn("主机状态->备机状态 (遇到权重更好主机)")
+									return nil
+								}
+								break
+							}
+						}
+					}
+				}
+			}
+		}
 	default:
 		global.SelfFlag = -1
 		log.Error("当前机器状态" + strconv.Itoa(global.SelfFlag) + "异常 停止检测")
+		return nil
 	}
 }
 
@@ -98,6 +130,7 @@ func GetAvailablePortAddress() (string, error) {
 		if isLocalIp {
 			conn, err := net.Dial("tcp", item.Address)
 			if err != nil {
+				global.CuCluster = &item
 				return item.Address, nil
 			}
 			_ = conn.Close()

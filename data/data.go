@@ -12,5 +12,5 @@ func Load() {
 func dataInit() {
 	global.SingletonNodeInfo = new(models.Data).GetData()
 	global.SelfFlag = 1
-	global.CuCluaster = nil
+	global.CuCluster = nil
 }
