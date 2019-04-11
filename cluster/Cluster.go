@@ -119,6 +119,7 @@ func MasterCheck() error {
 		log.Error("当前机器状态" + strconv.Itoa(global.SelfFlag) + "异常 停止检测")
 		return nil
 	}
+	return nil
 }
 
 func GetAvailablePortAddress() (string, error) {
