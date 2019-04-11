@@ -56,18 +56,19 @@ func (data *Data) GetDataFromJsonStr(dataJsonStr string) (*Data, error) {
 //线程安全
 var mutex sync.Mutex
 
-func (data *Data) SetData() {
+func (data *Data) SetData() error {
 	mutex.Lock()
 	dataJsonByte, err := json.Marshal(data)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	dataJsonStr := string(dataJsonByte)
 	err = ioutil.WriteFile("data.json", []byte(dataJsonStr), 0644)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	mutex.Unlock()
+	return nil
 }
 
 func (data *Data) CopyData(fileName string) {

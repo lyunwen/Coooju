@@ -138,9 +138,10 @@ func SynchronyData() error {
 		return err
 	}
 	bodyStr := string(body)
-	var returnObj *ClusterBackObj
 	var msg json.RawMessage
-	returnObj.Data = &msg
+	var returnObj = &ClusterBackObj{
+		Data: &msg,
+	}
 	if err := json.Unmarshal([]byte(bodyStr), &returnObj); err != nil {
 		return err
 	}
@@ -148,6 +149,6 @@ func SynchronyData() error {
 	if err = json.Unmarshal(msg, &masterData); err != nil {
 		return err
 	}
-	masterData.SetData()
-	return nil
+	err = masterData.SetData()
+	return err
 }
