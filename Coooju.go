@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-	log.Default("启动")
+	log.Default("==============================启动==============================")
 	data.Load()
 	router := gin.Default()                                                      //api路由       //主同步备接口
 	router.Group("/api/IsMaster").GET("/", api.IsMaster)                         //备机找主机

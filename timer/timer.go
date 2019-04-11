@@ -32,7 +32,6 @@ func SynchronyDataLoop() {
 	ticker := time.NewTicker(time.Second * 10)
 	go func() {
 		for range ticker.C {
-			log.Default("SynchronyDataLoop~")
 			if global.SelfFlag == 2 {
 				err := cluster.SynchronyData()
 				if err != nil {
