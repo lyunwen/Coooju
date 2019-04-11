@@ -19,7 +19,9 @@ func MasterCheckLoop() {
 	ticker := time.NewTicker(time.Second * 10)
 	go func() {
 		for range ticker.C {
-			cluster.MasterCheck()
+			if err := cluster.MasterCheck(); err != nil {
+				log.Error(err.Error())
+			}
 		}
 		ch <- 1
 	}()
@@ -33,8 +35,7 @@ func SynchronyDataLoop() {
 	go func() {
 		for range ticker.C {
 			if global.SelfFlag == 2 {
-				err := cluster.SynchronyData()
-				if err != nil {
+				if err := cluster.SynchronyData(); err != nil {
 					log.Error(err.Error())
 				}
 			}

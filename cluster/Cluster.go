@@ -67,9 +67,15 @@ func MasterCheck() error {
 					body, err := ioutil.ReadAll(response.Body)
 					if err == nil {
 						bodyStr := string(body)
-						var backJsonObj ClusterBackObj
+						var dataMsg json.RawMessage
+						var backJsonObj = ClusterBackObj{Data: &dataMsg}
 						if err = json.Unmarshal([]byte(bodyStr), &backJsonObj); err == nil {
 							if backJsonObj.Code == "3" { //遇到主机则正常
+								var otherMaster models.Cluster
+								if err = json.Unmarshal(dataMsg, &otherMaster); err != nil {
+									return err
+								}
+								global.MasterUrl = otherMaster.Address
 								break
 							}
 						}
