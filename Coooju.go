@@ -13,7 +13,6 @@ import (
 )
 
 func main() {
-	log.Warn("==============================启动==============================")
 	data.Load()
 	router := gin.Default()                                                      //api路由       //主同步备接口
 	router.Group("/api/IsMaster").GET("/", api.IsMaster)                         //备机找主机
@@ -33,6 +32,7 @@ func main() {
 		fmt.Println("start error:" + err.Error())
 		return
 	}
+	log.Warn("==============================启动：" + url + "==============================")
 	go timer.Load()
 	_ = router.Run(url)
 }
