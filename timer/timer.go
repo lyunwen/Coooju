@@ -21,7 +21,7 @@ func MasterCheckLoop() {
 	go func() {
 		for range ticker.C {
 			if err := mastercheck.Check(); err != nil {
-				log.Error(err.Error())
+				log.Error("MasterCheckLoop:" + err.Error())
 			}
 			//if err := cluster.MasterCheck(); err != nil {
 			//	log.Error(err.Error())
@@ -40,7 +40,7 @@ func SynchronyDataLoop() {
 		for range ticker.C {
 			if global.SelfFlag == 2 {
 				if err := cluster.SynchronyData(global.MasterUrl); err != nil {
-					log.Error(err.Error())
+					log.Error("SynchronyDataLoop:" + err.Error())
 				}
 			}
 		}
