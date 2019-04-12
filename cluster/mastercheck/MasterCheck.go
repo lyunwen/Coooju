@@ -111,7 +111,7 @@ func checkUrl(url string) (string, *models.Cluster, error) {
 		return "", nil, err
 	}
 	var otherMaster *models.Cluster
-	err = json.Unmarshal(dataMsg, otherMaster)
+	err = json.Unmarshal(dataMsg, &otherMaster)
 	if err != nil {
 		return "", nil, err
 	}
