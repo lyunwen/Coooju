@@ -13,12 +13,14 @@ import (
 )
 
 func Check() error {
+	var client = new(http.Client)
+	client.Timeout = 2000
 	// -1:异常态 1：初始态 2：备机状态 3：主机状态
 	switch global.SelfFlag {
 	case -1: //异常态
 	case 1: //初始态
 		for i, item := range global.SingletonNodeInfo.Clusters {
-			code, info, err := checkUrl(item.Address)
+			code, info, err := checkUrl(client, item.Address)
 			if err != nil {
 				log.Warn("checkUrl error:" + err.Error())
 			} else if code == "3" {
@@ -40,7 +42,7 @@ func Check() error {
 			}
 		}
 	case 2: //备机状态
-		code, _, err := checkUrl(global.MasterUrl)
+		code, _, err := checkUrl(client, global.MasterUrl)
 		if err != nil {
 			log.Warn("check master Url error:" + err.Error())
 		}
@@ -48,7 +50,7 @@ func Check() error {
 			return nil
 		} else {
 			for i, item := range global.SingletonNodeInfo.Clusters {
-				code, info, err := checkUrl(item.Address)
+				code, info, err := checkUrl(client, item.Address)
 				if err != nil {
 					log.Warn("check Url error:" + err.Error())
 				} else if code == "3" {
@@ -67,7 +69,7 @@ func Check() error {
 		}
 	case 3: //主机状态
 		for _, item := range global.SingletonNodeInfo.Clusters {
-			code, info, err := checkUrl(item.Address)
+			code, info, err := checkUrl(client, item.Address)
 			if err != nil {
 				log.Warn("check Url error:" + err.Error())
 			} else if code == "3" {
@@ -87,12 +89,15 @@ func Check() error {
 	return nil
 }
 
-func checkUrl(url string) (string, *models.Cluster, error) {
+func checkUrl(client *http.Client, url string) (string, *models.Cluster, error) {
+	if url == global.CuCluster.Address {
+		return "", nil, errors.New("local address")
+	}
 	request, err := http.NewRequest("GET", "http://"+url+"/api/IsMaster/", nil)
 	if err != nil {
 		return "", nil, err
 	}
-	response, err := new(http.Client).Do(request)
+	response, err := client.Do(request)
 	if err != nil {
 		return "", nil, err
 	}
