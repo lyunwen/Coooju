@@ -9,7 +9,6 @@ import (
 	"./timer"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"net/http"
 )
 
 func main() {
@@ -22,9 +21,10 @@ func main() {
 	//web socket 路由
 	router.GET("/ws", func(c *gin.Context) { sockects.WebSocketHandler(c.Writer, c.Request) })
 	//html页面路由
-	router.LoadHTMLGlob("view/*")
-	router.Group("/view/").GET("/:name", func(c *gin.Context) { c.HTML(http.StatusOK, c.Param("name")+".html", gin.H{}) })
+	//router.LoadHTMLGlob("view/*")
+	//router.Group("/view/").GET("/:name", func(c *gin.Context) { c.HTML(http.StatusOK, c.Param("name")+".html", gin.H{}) })
 	//静态文件路由
+	router.Static("/view", "./view")
 	router.Static("/wwwroot", "./wwwroot")
 
 	var url, err = cluster.GetAvailablePortAddress()
