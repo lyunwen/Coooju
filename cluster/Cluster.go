@@ -38,7 +38,7 @@ func MasterCheck() error {
 						if err = json.Unmarshal([]byte(bodyStr), &backJsonObj); err == nil {
 							if backJsonObj.Code == "3" { //遇到主机切备机
 								global.MasterUrl = item.Address
-								if err := SynchronyData(); err != nil {
+								if err := SynchronyData(global.MasterUrl); err != nil {
 									log.Warn("初始态->异常态 数据同步不成功:" + err.Error())
 									global.SelfFlag = -1
 								} else {
@@ -59,6 +59,28 @@ func MasterCheck() error {
 		}
 	case 2: //备机状态
 		client := &http.Client{}
+		request, _ := http.NewRequest("GET", "http://"+global.MasterUrl+"/api/IsMaster/", nil)
+
+		response, err := client.Do(request)
+		if err == nil && response.StatusCode == 200 {
+			body, err := ioutil.ReadAll(response.Body)
+			if err == nil {
+				bodyStr := string(body)
+				var dataMsg json.RawMessage
+				var backJsonObj = ClusterBackObj{Data: &dataMsg}
+				if err = json.Unmarshal([]byte(bodyStr), &backJsonObj); err == nil {
+					if backJsonObj.Code == "3" { //遇到主机则正常
+						var otherMaster models.Cluster
+						if err = json.Unmarshal(dataMsg, &otherMaster); err != nil {
+							return err
+						}
+						global.MasterUrl = otherMaster.Address
+						return nil
+					}
+				}
+			}
+		}
+
 		for i, item := range global.SingletonNodeInfo.Clusters {
 			request, err := http.NewRequest("GET", "http://"+item.Address+"/api/IsMaster/", nil)
 			if err == nil && item.Address != global.CuCluster.Address {
@@ -163,9 +185,9 @@ func isLocalIp(ip string) (bool, error) {
 }
 
 //获取master数据更新本地
-func SynchronyData() error {
+func SynchronyData(url string) error {
 	client := new(http.Client)
-	request, err := http.NewRequest("GET", "http://"+global.MasterUrl+"/api/cluster/getData", nil)
+	request, err := http.NewRequest("GET", "http://"+url+"/api/cluster/getData", nil)
 	if err != nil {
 		return err
 	}

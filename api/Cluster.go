@@ -23,7 +23,7 @@ func GetData(c *gin.Context) {
 }
 
 func SyncData(c *gin.Context) {
-	err := cluster.SynchronyData()
+	err := cluster.SynchronyData(global.MasterUrl)
 	if err == nil {
 		c.JSON(http.StatusOK, gin.H{"code": "0", "msg": "", "data": nil})
 	} else {
