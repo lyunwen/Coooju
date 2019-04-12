@@ -21,9 +21,7 @@ func Check() error {
 			code, info, err := checkUrl(item.Address)
 			if err != nil {
 				log.Warn("checkUrl error:" + err.Error())
-				return err
-			}
-			if code == "3" {
+			} else if code == "3" {
 				if err := cluster.SynchronyData(info.Address); err != nil {
 					log.Warn("初始态->异常态 数据同步不成功:" + err.Error())
 					global.SelfFlag = -1
@@ -45,7 +43,6 @@ func Check() error {
 		code, _, err := checkUrl(global.MasterUrl)
 		if err != nil {
 			log.Warn("check master Url error:" + err.Error())
-			return err
 		}
 		if code == "3" {
 			return nil
