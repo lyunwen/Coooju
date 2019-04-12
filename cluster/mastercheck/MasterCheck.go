@@ -54,10 +54,7 @@ func Check() error {
 				code, info, err := checkUrl(item.Address)
 				if err != nil {
 					log.Warn("check Url error:" + err.Error())
-
 				} else if code == "3" {
-					log.Warn("备机状态->备机状态")
-					global.SelfFlag = 2
 					if global.MasterUrl != info.Address {
 						log.Warn("主机已切换: " + global.MasterUrl + "->" + info.Address + "")
 						global.MasterUrl = info.Address
@@ -76,7 +73,6 @@ func Check() error {
 			code, info, err := checkUrl(item.Address)
 			if err != nil {
 				log.Warn("check Url error:" + err.Error())
-
 			} else if code == "3" {
 				if info.Level > global.CuCluster.Level {
 					log.Warn("当前master【address:" + global.CuCluster.Address + " level:" + strconv.Itoa(global.CuCluster.Level) + " name:" + global.CuCluster.Name + "】 发现 另外 master【address:" + info.Address + " level:" + strconv.Itoa(info.Level) + " name:" + info.Name + "】")
