@@ -10,11 +10,13 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 func Check() error {
-	var client = new(http.Client)
-	client.Timeout = 2000
+	client := &http.Client{
+		Timeout: time.Second * 5,
+	}
 	// -1:异常态 1：初始态 2：备机状态 3：主机状态
 	switch global.SelfFlag {
 	case -1: //异常态
