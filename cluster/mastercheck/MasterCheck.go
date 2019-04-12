@@ -27,7 +27,7 @@ func Check() error {
 					global.SelfFlag = -1
 					return err
 				} else {
-					log.Warn("初始态->备机状态")
+					log.Warn("初始态->备机状态  Master Address:" + info.Address)
 					global.SelfFlag = 2
 					global.MasterUrl = info.Address
 				}
@@ -75,7 +75,7 @@ func Check() error {
 					log.Warn("当前master【address:" + global.CuCluster.Address + " level:" + strconv.Itoa(global.CuCluster.Level) + " name:" + global.CuCluster.Name + "】 发现 另外 master【address:" + info.Address + " level:" + strconv.Itoa(info.Level) + " name:" + info.Name + "】")
 					global.SelfFlag = 2
 					global.MasterUrl = info.Address
-					log.Warn("主机状态->备机状态 (遇到权重更好主机)")
+					log.Warn("主机状态->备机状态 Master Address:" + info.Address + " (遇到权重更好主机)")
 				}
 			}
 		}
