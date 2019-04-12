@@ -23,9 +23,9 @@ func MasterCheckLoop() {
 			if err := mastercheck.Check(); err != nil {
 				log.Error(err.Error())
 			}
-			if err := cluster.MasterCheck(); err != nil {
-				log.Error(err.Error())
-			}
+			//if err := cluster.MasterCheck(); err != nil {
+			//	log.Error(err.Error())
+			//}
 		}
 		ch <- 1
 	}()
