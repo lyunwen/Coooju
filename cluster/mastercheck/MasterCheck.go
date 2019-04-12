@@ -92,9 +92,6 @@ func Check() error {
 }
 
 func checkUrl(client *http.Client, url string) (string, *models.Cluster, error) {
-	if url == global.CuCluster.Address {
-		return "", nil, errors.New("local address")
-	}
 	request, err := http.NewRequest("GET", "http://"+url+"/api/IsMaster/", nil)
 	if err != nil {
 		return "", nil, err
