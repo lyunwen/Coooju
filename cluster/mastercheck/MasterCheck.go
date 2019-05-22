@@ -17,7 +17,7 @@ func Check() error {
 	client := &http.Client{
 		Timeout: time.Second * 5,
 	}
-	// -1:异常态 1：初始态 2：备机状态 3：主机状态
+	// -1:异常态 1：初始态 2：备机状态 3：主机状态 （仔细考虑一下，还是往raft方向走吧~）
 	switch global.SelfFlag {
 	case -1: //异常态
 	case 1: //初始态
