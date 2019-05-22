@@ -19,11 +19,12 @@
     <ul>
         <li><a href="###">Services</a></li>
         <li><a href="###">Nodes</a></li>
+        <li><a href="###">Clusters</a></li>
     </ul>
 </div>
 <div class="nav">
     <ul>
-        <li><a href="###">Service</a></li>
+        <li><a href="###">Clusters</a></li>
     </ul>
 </div>
 <div class="filter">
@@ -52,7 +53,7 @@
     </div>
 </div>
 <div id="app">
-{{message}}
+    {{message}}
 </div>
 <div class="console-info">
 
@@ -60,16 +61,6 @@
 </body>
 </html>
 <script>
-
-    let app = new Vue({
-        el: '#app',
-        created:function(){
-            console.log("vue created~")
-        },
-        data: {
-            message: 'Hello Vue!'
-        }
-    });
     $(function () {
         let socket = new WebSocket("ws://localhost:6001/ws");
         console.log("Socket Connect Success");
@@ -88,5 +79,11 @@
         //     console.log("Socket Close Success");
         // }
         //
+    });
+    var app = new Vue({
+        el: '#app',
+        data: {
+            message: 'Hello Vue!'
+        }
     });
 </script>
