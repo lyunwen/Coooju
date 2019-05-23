@@ -3,6 +3,7 @@ package main
 import (
 	"./api"
 	"./cluster"
+	"./cluster/canvass"
 	"./common/log"
 	"./data"
 	"./sockects"
@@ -15,6 +16,7 @@ func main() {
 	data.Load()
 	router := gin.Default()                                                      //api路由       //主同步备接口
 	router.Group("/api/IsMaster").GET("/", api.IsMaster)                         //备机找主机
+	router.Group("/api/IsMaster").GET("/", canvass.Canvass)                      //拉票
 	router.Group("/api/cluster/getData").GET("/", api.GetData)                   //备机找主机
 	router.Group("/api/cluster/syncData").GET("/", api.SyncData)                 //备机找主机
 	router.Group("/api/cluster/getMasterAddress").GET("/", api.GetMasterAddress) //获取主机地址

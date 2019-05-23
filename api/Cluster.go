@@ -10,11 +10,11 @@ import (
 )
 
 func IsMaster(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"code": strconv.Itoa(global.SelfFlag), "msg": "", "data": global.CuCluster})
+	c.JSON(http.StatusOK, gin.H{"code": strconv.Itoa(int(global.SelfFlag)), "msg": "", "data": global.CuCluster})
 }
 
 func GetMasterAddress(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"code": strconv.Itoa(global.SelfFlag), "msg": "", "data": global.MasterUrl})
+	c.JSON(http.StatusOK, gin.H{"code": strconv.Itoa(int(global.SelfFlag)), "msg": "", "data": global.MasterUrl})
 }
 
 func GetData(c *gin.Context) {

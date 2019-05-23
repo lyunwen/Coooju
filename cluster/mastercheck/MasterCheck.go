@@ -4,9 +4,11 @@ import (
 	"../../cluster"
 	"../../common/log"
 	"../../global"
+	"../../global/SelfFlagStatus"
 	"../../models"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -17,45 +19,43 @@ func Check() error {
 	client := &http.Client{
 		Timeout: time.Second * 5,
 	}
-	// -1:异常态 1：初始态 2：备机状态 3：主机状态 （仔细考虑一下，还是往raft方向走吧~）
+	// 类raft算法
 	switch global.SelfFlag {
-	case -1: //异常态
-	case 1: //初始态
+	case SelfFlagStatus.Init:
 		for i, item := range global.SingletonNodeInfo.Clusters {
 			code, info, err := checkUrl(client, item.Address)
 			if err != nil {
 				log.Warn("checkUrl error:" + err.Error())
-			} else if code == "3" {
+			} else if code == strconv.Itoa(int(SelfFlagStatus.Leader)) {
 				if err := cluster.SynchronyData(info.Address); err != nil {
 					log.Warn("初始态->异常态 数据同步不成功:" + err.Error())
-					global.SelfFlag = -1
-					return err
+					panic("初始态->异常态 数据同步不成功:" + err.Error())
 				} else {
 					log.Warn("初始态->备机状态  Master Address:" + info.Address)
-					global.SelfFlag = 2
+					global.SelfFlag = SelfFlagStatus.Follow
 					global.MasterUrl = info.Address
 				}
 				break
 			}
 			if i+1 == len(global.SingletonNodeInfo.Clusters) {
 				global.MasterUrl = global.CuCluster.Address
-				global.SelfFlag = 3
+				global.SelfFlag = SelfFlagStatus.Follow
 				log.Warn("初始态->主机状态")
 			}
 		}
-	case 2: //备机状态
+	case SelfFlagStatus.Follow:
 		code, _, err := checkUrl(client, global.MasterUrl)
 		if err != nil {
 			log.Warn("check master Url error:" + err.Error())
 		}
-		if code == "3" {
+		if code == strconv.Itoa(int(SelfFlagStatus.Leader)) {
 			return nil
 		} else {
 			for i, item := range global.SingletonNodeInfo.Clusters {
 				code, info, err := checkUrl(client, item.Address)
 				if err != nil {
 					log.Warn("check Url error:" + err.Error())
-				} else if code == "3" {
+				} else if code == strconv.Itoa(int(SelfFlagStatus.Leader)) {
 					if global.MasterUrl != info.Address {
 						log.Warn("主机已切换: " + global.MasterUrl + "->" + info.Address + "")
 						global.MasterUrl = info.Address
@@ -64,17 +64,25 @@ func Check() error {
 				}
 				if i+1 == len(global.SingletonNodeInfo.Clusters) {
 					log.Warn("备机状态->主机状态")
-					global.SelfFlag = 3
+					global.SelfFlag = SelfFlagStatus.Leader
 					global.MasterUrl = global.CuCluster.Address
 				}
 			}
 		}
-	case 3: //主机状态
+	case SelfFlagStatus.Candidate:
+		hasVotedCount := 0
+		for _, item := range global.SingletonNodeInfo.Clusters {
+			fmt.Print(item)
+		}
+		if hasVotedCount > len(global.SingletonNodeInfo.Clusters) {
+
+		}
+	case SelfFlagStatus.Leader:
 		for _, item := range global.SingletonNodeInfo.Clusters {
 			code, info, err := checkUrl(client, item.Address)
 			if err != nil {
 				log.Warn("check Url error:" + err.Error())
-			} else if code == "3" {
+			} else if code == strconv.Itoa(int(SelfFlagStatus.Leader)) {
 				if info.Level > global.CuCluster.Level {
 					log.Warn("当前master【address:" + global.CuCluster.Address + " level:" + strconv.Itoa(global.CuCluster.Level) + " name:" + global.CuCluster.Name + "】 发现 另外 master【address:" + info.Address + " level:" + strconv.Itoa(info.Level) + " name:" + info.Name + "】")
 					global.SelfFlag = 2
@@ -84,9 +92,7 @@ func Check() error {
 			}
 		}
 	default:
-		global.SelfFlag = -1
-		log.Error("当前机器状态" + strconv.Itoa(global.SelfFlag) + "异常 停止检测")
-		return nil
+		panic("当前机器状态" + strconv.Itoa(int(global.SelfFlag)) + "异常 停止检测")
 	}
 	return nil
 }
@@ -109,7 +115,7 @@ func checkUrl(client *http.Client, url string) (string, *models.Cluster, error) 
 	}
 	bodyStr := string(body)
 	var dataMsg json.RawMessage
-	var backJsonObj = cluster.ClusterBackObj{Data: &dataMsg}
+	var backJsonObj = cluster.BackObj{Data: &dataMsg}
 	err = json.Unmarshal([]byte(bodyStr), &backJsonObj)
 	if err != nil {
 		return "", nil, err
