@@ -9,11 +9,19 @@
       "Nodes": [
         {
           "Name": "service01-node01",
-          "Address": "10.41.69.40:6003"
+          "Address": "10.41.69.40:6003",
+          "TokenLimit": 3000,
+          "TokenValidTime": 6000,
+          "TokenPerGetType": 1,
+          "TokenPerGetValue": "200"
         },
         {
           "Name": "service01-node01",
-          "Address": "10.41.69.40:6004"
+          "Address": "10.41.69.40:6004",
+          "TokenLimit": 3000,
+          "TokenValidTime": 6000,
+          "TokenPerGetType": 1,
+          "TokenPerGetValue": "200"
         }
       ]
     },
@@ -23,7 +31,11 @@
       "Nodes": [
         {
           "Name": "service01-node01",
-          "Address": "10.41.69.40:6005"
+          "Address": "10.41.69.40:6005",
+          "TokenLimit": 3000,
+          "TokenValidTime": 6000,
+          "TokenPerGetType": 1,
+          "TokenPerGetValue": "200"
         }
       ]
     }
@@ -37,7 +49,7 @@
     {
       "Level": 2,
       "Name": "Cluster2",
-      "Address": "10.41.69.40:6002"
+      "Address": "10.41.69.40:6002",
     },
     {
       "Level": 3,
