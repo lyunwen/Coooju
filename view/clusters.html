@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <title>services</title>
     <script type="text/javascript" src="/wwwroot/jquery-3.3.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script type="text/javascript" src="/wwwroot/vue.js"></script>
+    <script type="text/javascript" src="/wwwroot/axios.min.js"></script>
     <style>
         .service {
             display: inline-block;
@@ -14,76 +15,65 @@
     </style>
 </head>
 <body>
-
-<div class="head">
-    <ul>
-        <li><a href="###">Services</a></li>
-        <li><a href="###">Nodes</a></li>
-        <li><a href="###">Clusters</a></li>
-    </ul>
-</div>
-<div class="nav">
-    <ul>
-        <li><a href="###">Clusters</a></li>
-    </ul>
-</div>
-<div class="filter">
-
-</div>
-<div class="services">
-    <div class="service">
-        <div>Name</div>
-        <div>4 5 6</div>
-        <div>Tag</div>
-    </div>
-    <div class="service">
-        <div>Name</div>
-        <div>4 5 6</div>
-        <div>Tag</div>
-    </div>
-    <div class="service">
-        <div>Name</div>
-        <div>4 5 6</div>
-        <div>Tag</div>
-    </div>
-    <div class="service">
-        <div>Name</div>
-        <div>4 5 6</div>
-        <div>Tag</div>
-    </div>
-</div>
 <div id="app">
-    {{message}}
-</div>
-<div class="console-info">
-
+    <div class="services">
+        <div class="service" v-for="service in services">
+            <div>{{service.Name}}</div>
+            <div>{{service.Url}}</div>
+            <div class="nodes" v-for="node in service.Nodes">
+                <div>{{node.Name}}</div>
+                <div>{{node.Address}}</div>
+            </div>
+        </div>
+    </div>
 </div>
 </body>
 </html>
 <script>
+    let app = new Vue({
+        el: '#app',
+        created: function () {
+            console.log("vue created~")
+        },
+        data: {
+            message: 'Hello Vue!',
+            data: "this a data",
+            services: []
+        },
+        mounted:function(){
+            this.getData()
+        },
+        methods: {
+            getData() {
+                axios({
+                    method: 'get',
+                    url: '/api/cluster/getData'
+                }).then(function (resp) {
+                    console.log(JSON.stringify(resp.data.data.Services))
+                    app.services = resp.data.data.Services
+                }).catch(resp => {
+                    console.log('请求失败：' + resp.status + ',' + resp.statusText);
+                });
+            }
+        }
+    });
     $(function () {
-        let socket = new WebSocket("ws://localhost:6001/ws");
+        let socket = new WebSocket("ws://10.41.69.40:6001/ws");
         console.log("Socket Connect Success");
 
         socket.onopen = function () {
             $(".console-info").text("Socket Open Success");
-            console.log("");
+            console.log("bar");
         };
 
         socket.onmessage = function (msg) {
             console.log(msg.data)
-            $(".console-info").text("dddd")
+            $(".console-info").text("foo")
         }
 
         // socket.onclose = function () {
         //     console.log("Socket Close Success");
         // }
         //
-    });
-    var app = new Vue({
-        el: '#app',
-        data: {
-            message: 'Hello Vue!'
-        }
     });
 </script>

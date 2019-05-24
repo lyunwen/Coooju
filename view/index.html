@@ -2,36 +2,40 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>services</title>
+    <title>index</title>
     <script type="text/javascript" src="/wwwroot/jquery-3.3.1.min.js"></script>
     <script type="text/javascript" src="/wwwroot/vue.js"></script>
     <script type="text/javascript" src="/wwwroot/axios.min.js"></script>
-    <style>
-        .service {
-            display: inline-block;
-            width: 430px;
-            border: 1px solid #dce0e6;
-        }
-    </style>
+    <link rel="stylesheet" type="text/css" href="/wwwroot/css/index.css">
 </head>
 <body>
-<div id="services-app">
-    <div class="services">
-        <div class="service" v-for="service in data.Services">
-            <div>{{service.Name}}</div>
-            <div>{{service.Url}}</div>
-            <div class="nodes" v-for="node in service.Nodes">
-                <div>{{node.Name}}</div>
-                <div>{{node.Address}}</div>
+<div id="index-app" class="index">
+    <div>
+        <p class="content-title">数据面板</p>
+        <p><label>数据版本：</label><label>{{data.Version}}</label></p>
+        <p><label>数据描述：</label><label>{{data.Description}}</label></p>
+        <p><label>当前节点：</label><label>{{data.Url}}</label></p>
+        <div class="clusters">
+            <p class="clusters-title">主控集群</p>
+            <div class="cluster" v-for="cluster in data.Clusters">
+                <div><label>节点名称：</label>{{cluster.Name}}</div>
+                <div><label>节点地址：</label>{{cluster.Address}}</div>
+                <div><label>节点状态：</label>可用</div>
+                <div><label>竞选版本：</label>{{cluster.Level}}</div>
+                <div><label>竞选状态：</label>Follow</div>
             </div>
         </div>
-    </div>
-    <div class="clusters">
-        <div class="cluster" v-for="cluster in data.Clusters">
-            <div>{{cluster.Name}}</div>
-            <div>{{cluster.Level}}</div>
-            <div>{{cluster.Address}}</div>
-
+        <div class="services">
+            <p class="services-title">服务集群</p>
+            <div class="service" v-for="service in data.Services">
+                <div><label>服务名：</label>{{service.Name}}</div>
+                <div><label>健康度URL：</label>{{service.Url}}</div>
+                <div class="node" v-for="node in service.Nodes">
+                    <div><label>节点名称：</label>{{node.Name}}</div>
+                    <div><label>节点地址：</label>{{node.Address}}</div>
+                    <div><label>节点状态：</label>可用</div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -39,7 +43,7 @@
 </html>
 <script>
     let app = new Vue({
-        el: '#services-app',
+        el: '#index-app',
         created: function () {
             console.log("vue created~")
         },
@@ -47,7 +51,7 @@
             message: 'Hello Vue!',
             data: []
         },
-        mounted:function(){
+        mounted: function () {
             this.getData()
         },
         methods: {
