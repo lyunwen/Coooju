@@ -1,12 +1,29 @@
 package global
 
-import "../models"
+import (
+	"../models"
+	"../models/clusterState"
+)
 
 //全局异常
 var (
-	Errors            []error
-	SingletonNodeInfo *models.Data
-	MasterUrl         string
-	CuCluster         *models.Cluster
-	SelfFlag          int // -1:异常态 1：初始态 2：备机状态 3：主机状态
+	Errors      []error
+	ClusterData *models.Data
+	CurrentData *CurrentNodeInfo
+)
+
+type CurrentNodeInfo struct {
+	VotedTerm    int
+	VotedState   VotedState
+	ClusterState clusterState.ClusterState
+	Name         string
+	Level        int
+	Address      string
+}
+
+type VotedState int
+
+const (
+	VotedState_UnDo VotedState = 1
+	VotedState_Done VotedState = 2
 )

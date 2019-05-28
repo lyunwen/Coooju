@@ -1,10 +1,8 @@
 package timer
 
 import (
-	"../cluster"
 	"../cluster/mastercheck"
 	"../common/log"
-	"../global"
 	"time"
 )
 
@@ -33,18 +31,18 @@ func MasterCheckLoop() {
 }
 
 func SynchronyDataLoop() {
-	var ch chan int
-	//定时任务
-	ticker := time.NewTicker(time.Second * 10)
-	go func() {
-		for range ticker.C {
-			if global.SelfFlag == 2 {
-				if err := cluster.SynchronyData(global.MasterUrl); err != nil {
-					log.Error("SynchronyDataLoop:" + err.Error())
-				}
-			}
-		}
-		ch <- 1
-	}()
-	<-ch
+	//var ch chan int
+	////定时任务
+	//ticker := time.NewTicker(time.Second * 10)
+	//go func() {
+	//	for range ticker.C {
+	//		if global.SelfFlag == 2 {
+	//			if err := cluster.SynchronyData(global.MasterUrl); err != nil {
+	//				log.Error("SynchronyDataLoop:" + err.Error())
+	//			}
+	//		}
+	//	}
+	//	ch <- 1
+	//}()
+	//<-ch
 }

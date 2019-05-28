@@ -5,6 +5,7 @@ import (
 	"../../common/log"
 	"../../global"
 	"../../models"
+	"../../models/clusterState"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
@@ -17,107 +18,208 @@ func Check() error {
 	client := &http.Client{
 		Timeout: time.Second * 5,
 	}
-	// -1:异常态 1：初始态 2：备机状态 3：主机状态 （仔细考虑一下，还是往raft方向走吧~）
-	switch global.SelfFlag {
-	case -1: //异常态
-	case 1: //初始态
-		for i, item := range global.SingletonNodeInfo.Clusters {
-			code, info, err := checkUrl(client, item.Address)
-			if err != nil {
-				log.Warn("checkUrl error:" + err.Error())
-			} else if code == "3" {
-				if err := cluster.SynchronyData(info.Address); err != nil {
-					log.Warn("初始态->异常态 数据同步不成功:" + err.Error())
-					global.SelfFlag = -1
-					return err
-				} else {
-					log.Warn("初始态->备机状态  Master Address:" + info.Address)
-					global.SelfFlag = 2
-					global.MasterUrl = info.Address
+	switch global.CurrentData.ClusterState {
+	case clusterState.Follow: //1.同步主机数据 2.转候选者
+		for i, item := range global.ClusterData.Clusters {
+			if item.State == clusterState.Leader {
+				otherNode, err := getNodeInfo(client, item.Address)
+				if err != nil {
+					log.Warn("连接主机URL:" + item.Address + "异常")
+					break
 				}
+				if otherNode.ClusterState != clusterState.Leader {
+					log.Warn("获取主机URL:" + item.Address + "状态" + strconv.Itoa(int(otherNode.ClusterState)) + "异常")
+					break
+				}
+				dataInfo, err := getCusterInfo(client, item.Address)
+				if err != nil {
+					log.Warn("连接主机URL:" + item.Address + "异常")
+					break
+				}
+				err = dataInfo.SetData()
+				if err != nil {
+					log.Warn("SetData Error" + err.Error())
+					break
+				}
+			}
+			if i+1 == len(global.ClusterData.Clusters) {
+				global.CurrentData.ClusterState = clusterState.Candidate
+				log.Warn("State Follow->Candidate 未发现主机")
+			}
+		}
+	case clusterState.Candidate: //1.拉票成主机
+		var votedCount = 0
+		global.CurrentData.VotedTerm++
+		for _, item := range global.ClusterData.Clusters {
+			err := getVotes(client, item.Address, strconv.Itoa(global.CurrentData.VotedTerm))
+			if err == nil {
+				votedCount++
+			} else {
+				log.Warn("Candidate(URL:" + global.CurrentData.Address + ") 拉票失败" + err.Error())
+			}
+			if votedCount > (len(global.ClusterData.Services) / 2) {
+				log.Warn("State Candidate->Leader 获取足够票数")
+				global.CurrentData.ClusterState = clusterState.Leader
 				break
 			}
-			if i+1 == len(global.SingletonNodeInfo.Clusters) {
-				global.MasterUrl = global.CuCluster.Address
-				global.SelfFlag = 3
-				log.Warn("初始态->主机状态")
-			}
 		}
-	case 2: //备机状态
-		code, _, err := checkUrl(client, global.MasterUrl)
-		if err != nil {
-			log.Warn("check master Url error:" + err.Error())
-		}
-		if code == "3" {
-			return nil
-		} else {
-			for i, item := range global.SingletonNodeInfo.Clusters {
-				code, info, err := checkUrl(client, item.Address)
-				if err != nil {
-					log.Warn("check Url error:" + err.Error())
-				} else if code == "3" {
-					if global.MasterUrl != info.Address {
-						log.Warn("主机已切换: " + global.MasterUrl + "->" + info.Address + "")
-						global.MasterUrl = info.Address
-					}
-					return nil
-				}
-				if i+1 == len(global.SingletonNodeInfo.Clusters) {
-					log.Warn("备机状态->主机状态")
-					global.SelfFlag = 3
-					global.MasterUrl = global.CuCluster.Address
-				}
-			}
-		}
-	case 3: //主机状态
-		for _, item := range global.SingletonNodeInfo.Clusters {
-			code, info, err := checkUrl(client, item.Address)
+	case clusterState.Leader: // 1.检查是否存在更高优先级主机
+		for _, item := range global.ClusterData.Clusters {
+			otherNode, err := getNodeInfo(client, item.Address)
 			if err != nil {
-				log.Warn("check Url error:" + err.Error())
-			} else if code == "3" {
-				if info.Level > global.CuCluster.Level {
-					log.Warn("当前master【address:" + global.CuCluster.Address + " level:" + strconv.Itoa(global.CuCluster.Level) + " name:" + global.CuCluster.Name + "】 发现 另外 master【address:" + info.Address + " level:" + strconv.Itoa(info.Level) + " name:" + info.Name + "】")
-					global.SelfFlag = 2
-					global.MasterUrl = info.Address
-					log.Warn("主机状态->备机状态 Master Address:" + info.Address + " (遇到权重更好主机)")
-				}
+				log.Warn("连接主机URL:" + item.Address + "异常")
+				break
 			}
+			if otherNode.ClusterState == clusterState.Leader && global.CurrentData.VotedTerm < otherNode.VotedTerm {
+				log.Warn("发现权重更高Leader: 本机Leader（URL:" + global.CurrentData.Address + " Term：" + strconv.Itoa(global.CurrentData.VotedTerm) + "） 检测Leader（URL:" + otherNode.Address + " Term:" + strconv.Itoa(otherNode.VotedTerm) + "）")
+				global.CurrentData.VotedTerm = otherNode.VotedTerm
+				global.CurrentData.ClusterState = clusterState.Follow
+				log.Warn("Leader->Follow")
+				break
+			}
+			//if err := cluster.SynchronyData(info.Address); err != nil {
+			//	log.Warn("同步主机URL:" + item.Address + "数据异常")
+			//	break
+			//} else {
+			//	log.Warn("保持主机URL:" + item.Address + "连接..")
+			//}
 		}
 	default:
-		global.SelfFlag = -1
-		log.Error("当前机器状态" + strconv.Itoa(global.SelfFlag) + "异常 停止检测")
+		log.Error("当前机器状态" + strconv.Itoa(int(global.CurrentData.ClusterState)) + "异常 停止检测")
 		return nil
 	}
 	return nil
 }
 
-func checkUrl(client *http.Client, url string) (string, *models.Cluster, error) {
-	request, err := http.NewRequest("GET", "http://"+url+"/api/IsMaster/", nil)
+func getCusterInfo(client *http.Client, url string) (*models.Data, error) {
+	request, err := http.NewRequest("GET", "http://"+url+"/api/cluster/getCusterInfo/", nil)
 	if err != nil {
-		return "", nil, err
+		return nil, err
 	}
 	response, err := client.Do(request)
 	if err != nil {
-		return "", nil, err
+		return nil, err
 	}
 	if response.StatusCode != 200 {
-		return "", nil, errors.New("StatusCode error")
+		return nil, errors.New("StatusCode error")
 	}
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		return "", nil, err
+		return nil, err
 	}
 	bodyStr := string(body)
 	var dataMsg json.RawMessage
 	var backJsonObj = cluster.ClusterBackObj{Data: &dataMsg}
 	err = json.Unmarshal([]byte(bodyStr), &backJsonObj)
 	if err != nil {
-		return "", nil, err
+		return nil, err
 	}
-	var otherMaster *models.Cluster
+	if backJsonObj.Code != "0" {
+		return nil, errors.New("get data error")
+	}
+	var otherMaster *models.Data
 	err = json.Unmarshal(dataMsg, &otherMaster)
 	if err != nil {
-		return "", nil, err
+		return nil, err
 	}
-	return backJsonObj.Code, otherMaster, err
+	return otherMaster, err
+}
+
+func getNodeInfo(client *http.Client, url string) (*global.CurrentNodeInfo, error) {
+	request, err := http.NewRequest("GET", "http://"+url+"/api/cluster/getNodeInfo/", nil)
+	if err != nil {
+		return nil, err
+	}
+	response, err := client.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	if response.StatusCode != 200 {
+		return nil, errors.New("StatusCode error")
+	}
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+	bodyStr := string(body)
+	var dataMsg json.RawMessage
+	var backJsonObj = cluster.ClusterBackObj{Data: &dataMsg}
+	err = json.Unmarshal([]byte(bodyStr), &backJsonObj)
+	if err != nil {
+		return nil, err
+	}
+	if backJsonObj.Code != "0" {
+		return nil, errors.New("get data error")
+	}
+	var otherNode *global.CurrentNodeInfo
+	err = json.Unmarshal(dataMsg, &otherNode)
+	if err != nil {
+		return nil, err
+	}
+	return otherNode, err
+}
+
+//获取master数据更新本地
+func synchronyData(url string) error {
+	client := new(http.Client)
+	request, err := http.NewRequest("GET", "http://"+url+"/api/cluster/getData", nil)
+	if err != nil {
+		return err
+	}
+	response, err := client.Do(request)
+	if err != nil {
+		return err
+	}
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return err
+	}
+	bodyStr := string(body)
+	var msg json.RawMessage
+	var returnObj = &ClusterBackObj{
+		Data: &msg,
+	}
+	if err := json.Unmarshal([]byte(bodyStr), &returnObj); err != nil {
+		return err
+	}
+	var masterData *models.Data
+	if err = json.Unmarshal(msg, &masterData); err != nil {
+		return err
+	}
+	err = masterData.SetData()
+	return err
+}
+
+func getVotes(client *http.Client, url string, term string) error {
+	request, err := http.NewRequest("GET", "http://"+url+"/api/setVotes?"+term, nil)
+	if err != nil {
+		return err
+	}
+	response, err := client.Do(request)
+	if err != nil {
+		return err
+	}
+	if response.StatusCode != 200 {
+		return errors.New("StatusCode error")
+	}
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return err
+	}
+	bodyStr := string(body)
+	var dataMsg json.RawMessage
+	var backJsonObj = cluster.ClusterBackObj{Data: &dataMsg}
+	err = json.Unmarshal([]byte(bodyStr), &backJsonObj)
+	if err != nil {
+		return err
+	}
+	//var resultData string
+	//if err = json.Unmarshal(dataMsg, &resultData); err != nil {
+	//	return "", err
+	//}
+	if backJsonObj.Code == "0" {
+		return nil
+	} else {
+		return errors.New(backJsonObj.Msg)
+	}
 }
