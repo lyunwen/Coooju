@@ -77,12 +77,6 @@ func Check() error {
 				log.Warn("Leader->Follow")
 				break
 			}
-			//if err := cluster.SynchronyData(info.Address); err != nil {
-			//	log.Warn("同步主机URL:" + item.Address + "数据异常")
-			//	break
-			//} else {
-			//	log.Warn("保持主机URL:" + item.Address + "连接..")
-			//}
 		}
 	default:
 		log.Error("当前机器状态" + strconv.Itoa(int(global.CurrentData.ClusterState)) + "异常 停止检测")
@@ -157,37 +151,6 @@ func getNodeInfo(client *http.Client, url string) (*global.CurrentNodeInfo, erro
 		return nil, err
 	}
 	return otherNode, err
-}
-
-//获取master数据更新本地
-func synchronyData(url string) error {
-	client := new(http.Client)
-	request, err := http.NewRequest("GET", "http://"+url+"/api/cluster/getData", nil)
-	if err != nil {
-		return err
-	}
-	response, err := client.Do(request)
-	if err != nil {
-		return err
-	}
-	body, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return err
-	}
-	bodyStr := string(body)
-	var msg json.RawMessage
-	var returnObj = &ClusterBackObj{
-		Data: &msg,
-	}
-	if err := json.Unmarshal([]byte(bodyStr), &returnObj); err != nil {
-		return err
-	}
-	var masterData *models.Data
-	if err = json.Unmarshal(msg, &masterData); err != nil {
-		return err
-	}
-	err = masterData.SetData()
-	return err
 }
 
 func getVotes(client *http.Client, url string, term string) error {
