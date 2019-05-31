@@ -13,12 +13,13 @@ var (
 )
 
 type CurrentNodeInfo struct {
-	VotedTerm    int
-	VotedState   VotedState
-	ClusterState clusterState.ClusterState
-	Name         string
-	Term         int
-	Address      string
+	VotedTerm     int
+	VotedState    VotedState
+	MasterAddress string
+	ClusterState  clusterState.ClusterState
+	Name          string
+	Term          int
+	Address       string
 }
 
 type VotedState int

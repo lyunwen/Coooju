@@ -20,32 +20,28 @@ func Check() error {
 	}
 	switch global.CurrentData.ClusterState {
 	case clusterState.Follow: //1.同步主机数据 2.转候选者
-		for i, item := range global.ClusterData.Clusters {
-			if item.State == clusterState.Leader {
-				otherNode, err := getNodeInfo(client, item.Address)
-				if err != nil {
-					log.Warn("连接主机URL:" + item.Address + "异常")
-					break
-				}
-				if otherNode.ClusterState != clusterState.Leader {
-					log.Warn("获取主机URL:" + item.Address + "状态" + strconv.Itoa(int(otherNode.ClusterState)) + "异常")
-					break
-				}
-				dataInfo, err := getCusterInfo(client, item.Address)
-				if err != nil {
-					log.Warn("连接主机URL:" + item.Address + "异常")
-					break
-				}
-				err = dataInfo.SetData()
-				if err != nil {
-					log.Warn("SetData Error" + err.Error())
-					break
-				}
-			}
-			if i+1 == len(global.ClusterData.Clusters) {
-				global.CurrentData.ClusterState = clusterState.Candidate
-				log.Warn("[Cluster State]: Follow->Candidate 未发现主机")
-			}
+		otherNode, err := getNodeInfo(client, global.CurrentData.MasterAddress)
+		if err != nil {
+			log.Warn("[Cluster State]: Follow->Candidate 连接主机URL:" + global.CurrentData.Address + "异常")
+			global.CurrentData.ClusterState = clusterState.Candidate
+			break
+		}
+		if otherNode.ClusterState != clusterState.Leader {
+			log.Warn("[Cluster State]: Follow->Candidate 获取主机URL:" + global.CurrentData.Address + "状态" + strconv.Itoa(int(otherNode.ClusterState)) + "异常")
+			global.CurrentData.ClusterState = clusterState.Candidate
+			break
+		}
+		dataInfo, err := getCusterInfo(client, global.CurrentData.Address)
+		if err != nil {
+			log.Warn("[Cluster State]: Follow->Candidate 获取集群数据URL:" + global.CurrentData.Address + "异常")
+			global.CurrentData.ClusterState = clusterState.Candidate
+			break
+		}
+		err = dataInfo.SetData()
+		if err != nil {
+			log.Warn("[Cluster State]: Follow->Candidate SetData Error" + err.Error())
+			global.CurrentData.ClusterState = clusterState.Candidate
+			break
 		}
 	case clusterState.Candidate: //1.拉票成主机
 		var moreThanHalf = len(global.ClusterData.Services) / 2
@@ -56,9 +52,9 @@ func Check() error {
 			if err == nil {
 				if votedResult == "ok" {
 					votedCount++
+					log.Warn("拉票成功 URL:" + item.Address + " Term:" + strconv.Itoa(global.CurrentData.VotedTerm) + " Votes:" + strconv.Itoa(votedCount))
 				}
 				connectCount++
-				log.Warn("拉票成功 URL:" + item.Address + " Term:" + strconv.Itoa(global.CurrentData.VotedTerm) + " Votes:" + strconv.Itoa(votedCount))
 			} else {
 				log.Warn("拉票失败 URL:" + item.Address + " Term:" + strconv.Itoa(global.CurrentData.VotedTerm) + " Error:" + err.Error())
 			}

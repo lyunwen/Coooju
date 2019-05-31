@@ -1,7 +1,6 @@
 package models
 
 import (
-	"./clusterState"
 	"bytes"
 	"encoding/json"
 	"io/ioutil"
@@ -19,7 +18,6 @@ type Cluster struct {
 	Name    string
 	Level   int
 	Address string
-	State   clusterState.ClusterState
 }
 
 type Service struct {
