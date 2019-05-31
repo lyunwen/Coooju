@@ -58,7 +58,7 @@ func Check() error {
 					votedCount++
 				}
 				connectCount++
-				log.Warn("拉票成功 URL:" + item.Address + " Term:" + strconv.Itoa(global.CurrentData.VotedTerm) + "Votes:" + strconv.Itoa(votedCount))
+				log.Warn("拉票成功 URL:" + item.Address + " Term:" + strconv.Itoa(global.CurrentData.VotedTerm) + " Votes:" + strconv.Itoa(votedCount))
 			} else {
 				log.Warn("拉票失败 URL:" + item.Address + " Term:" + strconv.Itoa(global.CurrentData.VotedTerm) + " Error:" + err.Error())
 			}
