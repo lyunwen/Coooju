@@ -8,14 +8,6 @@ import (
 	"sync"
 )
 
-//func IsMaster(c *gin.Context) {
-//	c.JSON(http.StatusOK, gin.H{"code": strconv.Itoa(global.SelfFlag), "msg": "", "data": global.CuCluster})
-//}
-
-//func GetMasterAddress(c *gin.Context) {
-//	c.JSON(http.StatusOK, gin.H{"code": strconv.Itoa(global.SelfFlag), "msg": "", "data": global.MasterUrl})
-//}
-
 func GetClusterInfo(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"code": "0", "msg": "", "data": global.ClusterData})
 }
@@ -37,32 +29,23 @@ func SetVotes(c *gin.Context) {
 		getVotesMutex.Unlock()
 	}()
 	if term < global.CurrentData.VotedTerm {
-		c.JSON(http.StatusOK, gin.H{"code": "99", "msg": "lower term", "data": ""})
+		c.JSON(http.StatusOK, gin.H{"code": "0", "msg": "lower term", "data": "lower term"})
 		return
 	}
 	if term == global.CurrentData.VotedTerm {
 		if global.CurrentData.VotedState == global.VotedState_UnDo {
 			global.CurrentData.VotedState = global.VotedState_Done
-			c.JSON(http.StatusOK, gin.H{"code": "0", "msg": "ok", "data": ""})
+			c.JSON(http.StatusOK, gin.H{"code": "0", "msg": "ok", "data": "ok"})
 			return
 		} else {
-			c.JSON(http.StatusOK, gin.H{"code": "99", "msg": "has voted", "data": ""})
+			c.JSON(http.StatusOK, gin.H{"code": "0", "msg": "has voted", "data": "has voted"})
 			return
 		}
 	}
 	if term > global.CurrentData.VotedTerm {
 		global.CurrentData.VotedState = global.VotedState_Done
 		global.CurrentData.VotedTerm = term
-		c.JSON(http.StatusOK, gin.H{"code": "0", "msg": "ok", "data": ""})
+		c.JSON(http.StatusOK, gin.H{"code": "0", "msg": "ok", "data": "ok"})
 		return
 	}
-}
-
-func SyncData(c *gin.Context) {
-	//err := cluster.SynchronyData(global.MasterUrl)
-	//if err == nil {
-	//	c.JSON(http.StatusOK, gin.H{"code": "0", "msg": "", "data": nil})
-	//} else {
-	//	c.JSON(http.StatusOK, gin.H{"code": "0", "msg": err.Error(), "data": nil})
-	//}
 }

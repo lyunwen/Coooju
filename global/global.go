@@ -17,7 +17,7 @@ type CurrentNodeInfo struct {
 	VotedState   VotedState
 	ClusterState clusterState.ClusterState
 	Name         string
-	Level        int
+	Term         int
 	Address      string
 }
 

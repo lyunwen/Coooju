@@ -44,25 +44,33 @@ func Check() error {
 			}
 			if i+1 == len(global.ClusterData.Clusters) {
 				global.CurrentData.ClusterState = clusterState.Candidate
-				log.Warn("State Follow->Candidate 未发现主机")
+				log.Warn("[Cluster State]: Follow->Candidate 未发现主机")
 			}
 		}
 	case clusterState.Candidate: //1.拉票成主机
+		var moreThanHalf = len(global.ClusterData.Services) / 2
+		var connectCount = 0
 		var votedCount = 0
-		global.CurrentData.VotedTerm++
 		for _, item := range global.ClusterData.Clusters {
-			err := getVotes(client, item.Address, strconv.Itoa(global.CurrentData.VotedTerm))
+			votedResult, err := getVotes(client, item.Address, strconv.Itoa(global.CurrentData.VotedTerm))
 			if err == nil {
-				log.Warn("拉票成功 URL:" + item.Address + " Term:" + strconv.Itoa(global.CurrentData.VotedTerm))
-				votedCount++
+				if votedResult == "ok" {
+					votedCount++
+				}
+				connectCount++
+				log.Warn("拉票成功 URL:" + item.Address + " Term:" + strconv.Itoa(global.CurrentData.VotedTerm) + "Votes:" + strconv.Itoa(votedCount))
 			} else {
 				log.Warn("拉票失败 URL:" + item.Address + " Term:" + strconv.Itoa(global.CurrentData.VotedTerm) + " Error:" + err.Error())
 			}
-			if votedCount > (len(global.ClusterData.Services) / 2) {
-				log.Warn("State Candidate->Leader 获取足够票数")
-				global.CurrentData.ClusterState = clusterState.Leader
-				break
-			}
+		}
+		if connectCount > moreThanHalf {
+			global.CurrentData.VotedTerm++
+		}
+		if votedCount > moreThanHalf {
+			log.Warn("[Cluster State]: Candidate->Leader Votes:" + strconv.Itoa(votedCount))
+			global.CurrentData.ClusterState = clusterState.Leader
+			global.CurrentData.Term = global.CurrentData.VotedTerm
+			break
 		}
 	case clusterState.Leader: // 1.检查是否存在更高优先级主机
 		for _, item := range global.ClusterData.Clusters {
@@ -72,10 +80,10 @@ func Check() error {
 				break
 			}
 			if otherNode.ClusterState == clusterState.Leader && global.CurrentData.VotedTerm < otherNode.VotedTerm {
-				log.Warn("发现权重更高Leader: 本机Leader（URL:" + global.CurrentData.Address + " Term：" + strconv.Itoa(global.CurrentData.VotedTerm) + "） 检测Leader（URL:" + otherNode.Address + " Term:" + strconv.Itoa(otherNode.VotedTerm) + "）")
+				log.Warn("Found Bigger Term: Local（URL:" + global.CurrentData.Address + " Term：" + strconv.Itoa(global.CurrentData.VotedTerm) + "） Other（URL:" + otherNode.Address + " Term:" + strconv.Itoa(otherNode.VotedTerm) + "）")
 				global.CurrentData.VotedTerm = otherNode.VotedTerm
 				global.CurrentData.ClusterState = clusterState.Follow
-				log.Warn("Leader->Follow")
+				log.Warn("[Cluster State]: Leader->Follow")
 				break
 			}
 		}
@@ -154,36 +162,36 @@ func getNodeInfo(client *http.Client, url string) (*global.CurrentNodeInfo, erro
 	return otherNode, err
 }
 
-func getVotes(client *http.Client, url string, term string) error {
+func getVotes(client *http.Client, url string, term string) (string, error) {
 	request, err := http.NewRequest("GET", "http://"+url+"/api/setVotes?term="+term, nil)
 	if err != nil {
-		return err
+		return "", err
 	}
 	response, err := client.Do(request)
 	if err != nil {
-		return err
+		return "", err
 	}
 	if response.StatusCode != 200 {
-		return errors.New("StatusCode error")
+		return "", errors.New("StatusCode error")
 	}
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		return err
+		return "", err
 	}
 	bodyStr := string(body)
 	var dataMsg json.RawMessage
 	var backJsonObj = cluster.ClusterBackObj{Data: &dataMsg}
 	err = json.Unmarshal([]byte(bodyStr), &backJsonObj)
 	if err != nil {
-		return err
+		return "", err
 	}
-	//var resultData string
-	//if err = json.Unmarshal(dataMsg, &resultData); err != nil {
-	//	return "", err
-	//}
 	if backJsonObj.Code == "0" {
-		return nil
+		var resultData string
+		if err = json.Unmarshal(dataMsg, &resultData); err != nil {
+			return "", err
+		}
+		return resultData, nil
 	} else {
-		return errors.New(backJsonObj.Msg)
+		return "", errors.New(backJsonObj.Msg)
 	}
 }

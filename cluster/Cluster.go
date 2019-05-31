@@ -32,7 +32,7 @@ func GetAvailablePortAddress() (string, error) {
 					VotedState:   global.VotedState_UnDo,
 					ClusterState: clusterState.Follow,
 					Name:         item.Name,
-					Level:        item.Level,
+					Term:         1,
 					Address:      item.Address,
 				}
 				return item.Address, nil
