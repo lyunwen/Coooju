@@ -53,6 +53,7 @@ func Check() error {
 				if votedResult == "found leader" {
 					log.Warn("[Cluster State]: Candidate->Follow found leader:" + item.Address)
 					global.CurrentData.ClusterState = clusterState.Follow
+					global.CurrentData.MasterAddress = item.Address
 					return nil
 				} else if votedResult == "ok" {
 					votedCount++
