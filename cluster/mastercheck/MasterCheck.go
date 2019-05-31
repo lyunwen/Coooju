@@ -53,9 +53,10 @@ func Check() error {
 		for _, item := range global.ClusterData.Clusters {
 			err := getVotes(client, item.Address, strconv.Itoa(global.CurrentData.VotedTerm))
 			if err == nil {
+				log.Warn("拉票成功 URL:" + item.Address + " Term:" + strconv.Itoa(global.CurrentData.VotedTerm))
 				votedCount++
 			} else {
-				log.Warn("Candidate(URL:" + global.CurrentData.Address + ") 拉票失败" + err.Error())
+				log.Warn("拉票失败 URL:" + item.Address + " Term:" + strconv.Itoa(global.CurrentData.VotedTerm) + " Error:" + err.Error())
 			}
 			if votedCount > (len(global.ClusterData.Services) / 2) {
 				log.Warn("State Candidate->Leader 获取足够票数")
