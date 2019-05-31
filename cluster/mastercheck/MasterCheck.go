@@ -154,7 +154,7 @@ func getNodeInfo(client *http.Client, url string) (*global.CurrentNodeInfo, erro
 }
 
 func getVotes(client *http.Client, url string, term string) error {
-	request, err := http.NewRequest("GET", "http://"+url+"/api/setVotes?"+term, nil)
+	request, err := http.NewRequest("GET", "http://"+url+"/api/setVotes?term="+term, nil)
 	if err != nil {
 		return err
 	}
