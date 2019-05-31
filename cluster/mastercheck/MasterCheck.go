@@ -51,7 +51,7 @@ func Check() error {
 			votedResult, err := getVotes(client, item.Address, strconv.Itoa(global.CurrentData.VotedTerm))
 			if err == nil {
 				if votedResult == "found leader" {
-					log.Warn("[Cluster State]: Candidate->Leader found leader:" + item.Address)
+					log.Warn("[Cluster State]: Candidate->Follow found leader:" + item.Address)
 					global.CurrentData.ClusterState = clusterState.Follow
 					return nil
 				} else if votedResult == "ok" {
