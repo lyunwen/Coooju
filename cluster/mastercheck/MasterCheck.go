@@ -50,7 +50,11 @@ func Check() error {
 		for _, item := range global.ClusterData.Clusters {
 			votedResult, err := getVotes(client, item.Address, strconv.Itoa(global.CurrentData.VotedTerm))
 			if err == nil {
-				if votedResult == "ok" {
+				if votedResult == "found leader" {
+					log.Warn("[Cluster State]: Candidate->Leader found leader:" + item.Address)
+					global.CurrentData.ClusterState = clusterState.Follow
+					return nil
+				} else if votedResult == "ok" {
 					votedCount++
 					log.Warn("拉票成功 URL:" + item.Address + " Term:" + strconv.Itoa(global.CurrentData.VotedTerm) + " Votes:" + strconv.Itoa(votedCount))
 				}

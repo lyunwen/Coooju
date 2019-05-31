@@ -2,6 +2,7 @@ package api
 
 import (
 	"../global"
+	"../models/clusterState"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
@@ -29,11 +30,19 @@ func SetVotes(c *gin.Context) {
 		getVotesMutex.Unlock()
 	}()
 	if term < global.CurrentData.VotedTerm {
-		c.JSON(http.StatusOK, gin.H{"code": "0", "msg": "lower term", "data": "lower term"})
-		return
+		if global.CurrentData.ClusterState == clusterState.Leader {
+			c.JSON(http.StatusOK, gin.H{"code": "0", "msg": "lower term", "data": "found leader"})
+			return
+		} else {
+			c.JSON(http.StatusOK, gin.H{"code": "0", "msg": "lower term", "data": "lower term"})
+			return
+		}
 	}
 	if term == global.CurrentData.VotedTerm {
-		if global.CurrentData.VotedState == global.VotedState_UnDo {
+		if global.CurrentData.ClusterState == clusterState.Leader {
+			c.JSON(http.StatusOK, gin.H{"code": "0", "msg": "lower term", "data": "found leader"})
+			return
+		} else if global.CurrentData.VotedState == global.VotedState_UnDo {
 			global.CurrentData.VotedState = global.VotedState_Done
 			c.JSON(http.StatusOK, gin.H{"code": "0", "msg": "ok", "data": "ok"})
 			return
