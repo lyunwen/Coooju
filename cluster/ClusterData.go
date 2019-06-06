@@ -29,17 +29,17 @@ func Init() {
 		}
 		if isLocalIp {
 			conn, err := net.Dial("tcp", item.Address)
-			if err != nil {
+			if err == nil {
 				CurrentData = &CurrentNodeInfo{
 					ClusterState:  clusterState.Follow,
 					Address:       item.Address,
 					Level:         item.Level,
 					MasterAddress: "",
 				}
+				_ = conn.Close()
 			}
-			_ = conn.Close()
 		}
-		if index == len(ClusterData.Clusters) {
+		if index+1 == len(ClusterData.Clusters) {
 			panic("can not find right ip")
 		}
 	}
