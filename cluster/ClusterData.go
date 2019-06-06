@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	ClusterData *models.Data
-	CurrentData *CurrentNodeInfo
+	ShareData *models.Data
+	OwnData   *CurrentNodeInfo
 )
 
 type CurrentNodeInfo struct {
@@ -21,43 +21,42 @@ type CurrentNodeInfo struct {
 }
 
 func Init() {
-	ClusterData = new(models.Data).GetData()
-	for index, item := range ClusterData.Clusters {
-		isLocalIp, err := isLocalIp(strings.Split(item.Address, ":")[0])
-		if err != nil {
-			panic(err.Error())
-		}
-		if isLocalIp {
+	ShareData = new(models.Data).GetData()
+	for index, item := range ShareData.Clusters {
+		if isLocalIP(strings.Split(item.Address, ":")[0]) {
 			conn, err := net.Dial("tcp", item.Address)
 			if err == nil {
-				CurrentData = &CurrentNodeInfo{
+				_ = conn.Close()
+			} else {
+				OwnData = &CurrentNodeInfo{
 					ClusterState:  clusterState.Follow,
 					Address:       item.Address,
+					Name:          item.Name,
 					Level:         item.Level,
 					MasterAddress: "",
 				}
-				_ = conn.Close()
 				break
 			}
 		}
-		if index+1 == len(ClusterData.Clusters) {
+		if index+1 == len(ShareData.Clusters) {
 			panic("can not find right ip")
 		}
 	}
 }
 
-func isLocalIp(ip string) (bool, error) {
+func isLocalIP(ip string) bool {
 	adders, err := net.InterfaceAddrs()
 	if err != nil {
-		return false, err
+		panic(err)
 	}
-	for _, address := range adders {
-		if ipNet, ok := address.(*net.IPNet); ok && !ipNet.IP.IsLoopback() {
+	for _, value := range adders {
+		if ipNet, ok := value.(*net.IPNet); ok && !ipNet.IP.IsLoopback() {
 			if ipNet.IP.To4() != nil {
-				ip = ipNet.IP.String()
-				return true, nil
+				if ipNet.IP.String() == ip {
+					return true
+				}
 			}
 		}
 	}
-	return false, nil
+	return false
 }

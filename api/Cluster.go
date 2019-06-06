@@ -8,11 +8,11 @@ import (
 )
 
 func GetClusterInfo(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"code": "0", "msg": "", "data": cluster.ClusterData})
+	c.JSON(http.StatusOK, gin.H{"code": "0", "msg": "", "data": cluster.ShareData})
 }
 
 func GetNodeInfo(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"code": "0", "msg": "", "data": cluster.CurrentData})
+	c.JSON(http.StatusOK, gin.H{"code": "0", "msg": "", "data": cluster.OwnData})
 }
 
 func GetData(c *gin.Context) {
@@ -21,7 +21,7 @@ func GetData(c *gin.Context) {
 }
 
 func SyncData(c *gin.Context) {
-	err := cluster.SynchronyData(cluster.CurrentData.MasterAddress)
+	err := cluster.SynchronyData(cluster.OwnData.MasterAddress)
 	if err == nil {
 		c.JSON(http.StatusOK, gin.H{"code": "0", "msg": "", "data": nil})
 	} else {

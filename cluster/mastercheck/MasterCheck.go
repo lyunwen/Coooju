@@ -17,13 +17,13 @@ func Check() error {
 	client := &http.Client{
 		Timeout: time.Second * 5,
 	}
-	switch cluster.CurrentData.ClusterState {
+	switch cluster.OwnData.ClusterState {
 	case clusterState.Follow:
-		masterNode, err := getNodeInfo(client, cluster.CurrentData.MasterAddress)
+		masterNode, err := getNodeInfo(client, cluster.OwnData.MasterAddress)
 		if err == nil && masterNode.ClusterState == clusterState.Leader {
-			dataInfo, err := getCusterInfo(client, cluster.CurrentData.Address)
+			dataInfo, err := getCusterInfo(client, cluster.OwnData.Address)
 			if err != nil {
-				log.Warn("[Follow]get master node URL:" + cluster.CurrentData.Address + "error")
+				log.Warn("[Follow]get master node URL:" + cluster.OwnData.Address + "error")
 				break
 			}
 			if err = dataInfo.SetData(); err != nil {
@@ -31,35 +31,35 @@ func Check() error {
 				break
 			}
 		} else {
-			for _, item := range cluster.ClusterData.Clusters {
+			for _, item := range cluster.ShareData.Clusters {
 				otherNode, err := getNodeInfo(client, item.Address)
 				if err == nil && otherNode.ClusterState == clusterState.Leader {
-					log.Warn("[Follow]master exchange:" + cluster.CurrentData.MasterAddress + " ->" + item.Address)
-					cluster.CurrentData.MasterAddress = item.Address
+					log.Warn("[Follow]master exchange:" + cluster.OwnData.MasterAddress + " ->" + item.Address)
+					cluster.OwnData.MasterAddress = item.Address
 					break
 				}
 			}
-			cluster.CurrentData.ClusterState = clusterState.Leader
-			cluster.CurrentData.MasterAddress = cluster.CurrentData.Address
-			log.Warn("[Follow]become master:" + cluster.CurrentData.MasterAddress + " ->" + cluster.CurrentData.Address)
+			log.Warn("[Follow]become master:" + cluster.OwnData.MasterAddress + " ->" + cluster.OwnData.Address)
+			cluster.OwnData.ClusterState = clusterState.Leader
+			cluster.OwnData.MasterAddress = cluster.OwnData.Address
 		}
 	case clusterState.Leader:
-		for _, item := range cluster.ClusterData.Clusters {
+		for _, item := range cluster.ShareData.Clusters {
 			node, err := getNodeInfo(client, item.Address)
 			if err != nil {
 				log.Warn("[Leader]Url:" + item.Address + "check error：" + err.Error())
 			} else if node.ClusterState == clusterState.Follow {
 				log.Warn("[Leader]Url:" + item.Address + "check success")
-			} else if node.ClusterState == clusterState.Leader && node.Level > cluster.CurrentData.Level {
-				log.Warn("[Leader]Url:" + item.Address + "find bigger level:" + strconv.Itoa(node.Level) + ">" + strconv.Itoa(cluster.CurrentData.Level))
-				log.Warn("[Leader]master exchange:" + cluster.CurrentData.MasterAddress + " ->" + node.Address)
-				cluster.CurrentData.MasterAddress = node.Address
+			} else if node.ClusterState == clusterState.Leader && node.Level > cluster.OwnData.Level {
+				log.Warn("[Leader]Url:" + item.Address + "find bigger level:" + strconv.Itoa(node.Level) + ">" + strconv.Itoa(cluster.OwnData.Level))
+				log.Warn("[Leader]master exchange:" + cluster.OwnData.MasterAddress + " ->" + node.Address)
+				cluster.OwnData.MasterAddress = node.Address
 			} else {
 				log.Warn("Url:" + item.Address + "error")
 			}
 		}
 	default:
-		panic("当前机器状态" + strconv.Itoa(int(cluster.CurrentData.ClusterState)) + "异常 停止检测")
+		panic("当前机器状态" + strconv.Itoa(int(cluster.OwnData.ClusterState)) + "异常 停止检测")
 	}
 	return nil
 }

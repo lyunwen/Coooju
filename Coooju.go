@@ -25,7 +25,7 @@ func main() {
 	router.Static("/view", "./view")
 	router.Static("/wwwroot", "./wwwroot")
 
-	log.Warn("==============================启动：" + cluster.CurrentData.Address + "==============================")
+	log.Warn("==============================启动：" + cluster.OwnData.Address + "==============================")
 	go timer.Load()
-	_ = router.Run(cluster.CurrentData.Address)
+	_ = router.Run(cluster.OwnData.Address)
 }

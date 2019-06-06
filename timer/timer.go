@@ -38,8 +38,8 @@ func SynchronyDataLoop() {
 	ticker := time.NewTicker(time.Second * 10)
 	go func() {
 		for range ticker.C {
-			if cluster.CurrentData.ClusterState == clusterState.Follow {
-				if err := cluster.SynchronyData(cluster.CurrentData.MasterAddress); err != nil {
+			if cluster.OwnData.ClusterState == clusterState.Follow {
+				if err := cluster.SynchronyData(cluster.OwnData.MasterAddress); err != nil {
 					log.Error("SynchronyDataLoop:" + err.Error())
 				}
 			}
