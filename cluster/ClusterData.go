@@ -34,7 +34,7 @@ func Init() {
 					ClusterState:  clusterState.Follow,
 					Address:       item.Address,
 					Level:         item.Level,
-					MasterAddress: nil,
+					MasterAddress: "",
 				}
 			}
 			_ = conn.Close()
