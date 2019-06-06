@@ -12,28 +12,27 @@
 <div id="index-app" class="index">
     <div>
         <p class="content-title">数据面板</p>
-        <p><label>数据版本：</label><label>{{data.Version}}</label></p>
-        <p><label>数据描述：</label><label>{{data.Description}}</label></p>
-        <p><label>当前节点：</label><label>{{data.Url}}</label></p>
+        <p><label>数据描述：</label><label>{{shareData.Description}}</label></p>
+        <p><label>当前节点：</label><label>{{ownData.Address}}</label></p>
         <div class="clusters">
             <p class="clusters-title">主控集群</p>
-            <div class="cluster" v-for="cluster in data.Clusters">
+            <div class="cluster" v-for="cluster in shareData.Clusters">
                 <div><label>节点名称：</label>{{cluster.Name}}</div>
                 <div><label>节点地址：</label>{{cluster.Address}}</div>
-                <div><label>节点状态：</label>可用</div>
-                <div><label>竞选版本：</label>{{cluster.Level}}</div>
-                <div><label>竞选状态：</label>Follow</div>
+                <div><label>节点权重：</label>{{cluster.Level}}</div>
+                <div><label class="live-icon">节点状态：</label>{{cluster.ClusterState}}</div>
+                <div><label>指定主机：</label>{{cluster.MasterAddress}}</div>
             </div>
         </div>
         <div class="services">
             <p class="services-title">服务集群</p>
-            <div class="service" v-for="service in data.Services">
+            <div class="service" v-for="service in shareData.Services">
                 <div><label>服务名：</label>{{service.Name}}</div>
                 <div><label>健康度URL：</label>{{service.Url}}</div>
                 <div class="node" v-for="node in service.Nodes">
                     <div><label>节点名称：</label>{{node.Name}}</div>
                     <div><label>节点地址：</label>{{node.Address}}</div>
-                    <div><label>节点状态：</label>可用</div>
+                    <div><label class="live-icon">节点状态：</label>可用</div>
                 </div>
             </div>
         </div>
@@ -44,47 +43,81 @@
 <script>
     let app = new Vue({
         el: '#index-app',
+        data: {
+            ownData: {},
+            shareData: {}
+        },
+        OwnObj: null,
         created: function () {
             console.log("vue created~")
         },
-        data: {
-            message: 'Hello Vue!',
-            data: []
+        beforeMount: function () {
+            this.getData()
+            this.getNodeInfo()
         },
         mounted: function () {
-            this.getData()
+
         },
         methods: {
-            getData() {
-                axios({
-                    method: 'get',
-                    url: '/api/cluster/getData'
-                }).then(function (resp) {
-                    console.log(JSON.stringify(resp.data.data))
-                    app.data = resp.data.data
-                }).catch(resp => {
+             getData() {
+                axios.get("/api/cluster/getData")
+                    .then(function (resp) {
+                        app.shareData = resp.data.data
+                        app.clusterNodeStateInit()
+                    }).catch(resp => {
                     console.log('请求失败：' + resp.status + ',' + resp.statusText);
                 });
+            },
+            getNodeInfo() {
+                axios.get('/api/cluster/getNodeInfo')
+                    .then(function (resp) {
+                        app.ownData = resp.data.data
+                        app.socketInit()
+                    }).catch(resp => {
+                    console.log('请求失败：' + resp.status + ',' + resp.statusText);
+                });
+            },
+            socketInit() {
+                let socket = new WebSocket("ws://"+this.ownData.Address+"/ws");
+                console.log("Socket Connect Success");
+                socket.onopen = function () {
+                    $(".console-info").text("Socket Open Success");
+                    console.log("bar");
+                };
+                socket.onmessage = function (msg) {
+                    console.log(msg.data)
+                    $(".console-info").text("foo")
+                }
+            },
+            clusterNodeStateInit(){
+                 for(let i=0;i<this.shareData.Clusters.length;i++){
+                     axios.get("http://"+this.shareData.Clusters[i].Address+'/api/cluster/getNodeInfo')
+                         .then(function (resp) {
+                             resp.data
+                         }).catch(resp => {
+                         console.log('请求失败：' + resp.status + ',' + resp.statusText);
+                     })
+                 }
             }
-        }
+        },
     });
-    $(function () {
-        let socket = new WebSocket("ws://10.41.69.40:6001/ws");
-        console.log("Socket Connect Success");
-
-        socket.onopen = function () {
-            $(".console-info").text("Socket Open Success");
-            console.log("bar");
-        };
-
-        socket.onmessage = function (msg) {
-            console.log(msg.data)
-            $(".console-info").text("foo")
-        }
-
-        // socket.onclose = function () {
-        //     console.log("Socket Close Success");
-        // }
-        //
-    });
+    // $(function () {
+    //     let socket = new WebSocket("ws://10.41.69.40:6001/ws");
+    //     console.log("Socket Connect Success");
+    //
+    //     socket.onopen = function () {
+    //         $(".console-info").text("Socket Open Success");
+    //         console.log("bar");
+    //     };
+    //
+    //     socket.onmessage = function (msg) {
+    //         console.log(msg.data)
+    //         $(".console-info").text("foo")
+    //     }
+    //
+    //     // socket.onclose = function () {
+    //     //     console.log("Socket Close Success");
+    //     // }
+    //     //
+    // });
 </script>

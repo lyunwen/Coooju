@@ -1,40 +1,55 @@
-.index .content-title{
+.index .content-title {
     font-size: 30px;
     padding-bottom: 10px;
     border-bottom: #000 3px solid;
     width: 300px;
 }
 
-.index .clusters-title{
+.index .clusters-title {
     font-size: 20px;
     padding-bottom: 5px;
     border-bottom: #000 2px dashed;
     width: 150px;
 }
 
-.index .clusters .cluster{
+.index .clusters .cluster {
     display: inline-block;
     border: #dce0e6 2px dashed;
     margin: 10px;
     padding: 3px;
 }
 
-.index .services-title{
+.index .services-title {
     font-size: 20px;
     padding-bottom: 5px;
     border-bottom: #000 2px dashed;
     width: 150px;
 }
 
-.index .services .service{
+.index .services .service {
     border-bottom: #dce0e6 2px dashed;
     margin: 10px;
     padding: 3px;
 }
 
-.index .services .service .node{
+.index .services .service .node {
     display: inline-block;
     border: #dce0e6 2px dashed;
     margin: 10px;
     padding: 3px;
+}
+
+
+/**/
+.live-icon:after {
+    display: inline-block;
+    content: "o";
+    color: red;
+    vertical-align: top;
+    margin-right: 2px;
+    font-size: 1px;
+    position: relative;
+    left: -7px;
+    width: 0px;
+    top: -5px;
 }
