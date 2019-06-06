@@ -36,7 +36,7 @@ func Check() error {
 				if err == nil && otherNode.ClusterState == clusterState.Leader {
 					log.Warn("[Follow]master exchange:" + cluster.OwnData.MasterAddress + " ->" + item.Address)
 					cluster.OwnData.MasterAddress = item.Address
-					break
+					return nil
 				}
 			}
 			log.Warn("[Follow]become master:" + cluster.OwnData.MasterAddress + " ->" + cluster.OwnData.Address)
