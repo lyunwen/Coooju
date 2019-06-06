@@ -17,11 +17,12 @@
         <div class="clusters">
             <p class="clusters-title">主控集群</p>
             <div class="cluster" v-for="cluster in shareData.Clusters">
-                <div><label>节点名称：</label>{{cluster.Name}}</div>
                 <div><label>节点地址：</label>{{cluster.Address}}</div>
-                <div><label>节点权重：</label>{{cluster.Level}}</div>
+                <div><label class="live-icon">节点名称：</label>{{cluster.Name}}</div>
+                <div><label class="live-icon">节点权重：</label>{{cluster.Level}}</div>
                 <div><label class="live-icon">节点状态：</label>{{cluster.ClusterState}}</div>
-                <div><label>指定主机：</label>{{cluster.MasterAddress}}</div>
+                <div><label class="live-icon">指定主机：</label>{{cluster.MasterAddress}}</div>
+                <div><label class="live-icon">更新时间：</label>{{cluster.FlashTag}}</div>
             </div>
         </div>
         <div class="services">
@@ -44,8 +45,35 @@
     let app = new Vue({
         el: '#index-app',
         data: {
-            ownData: {},
-            shareData: {}
+            ownData: {
+                MasterAddress: "",
+                ClusterState: "",
+                Address: ""
+            },
+            shareData: {
+                Description: "",
+                Services: [
+                    {
+                        Name: "",
+                        Url: "",
+                        Nodes: [
+                            {
+                                Name: "",
+                                Address: "",
+                                FlashTag: "."
+                            }
+                        ]
+                    }
+                ],
+                Clusters: [
+                    {
+                        Level: "",
+                        Name: "",
+                        Address: "",
+                        FlashTag: "."
+                    }
+                ],
+            }
         },
         OwnObj: null,
         created: function () {
@@ -54,16 +82,17 @@
         beforeMount: function () {
             this.getData()
             this.getNodeInfo()
+            this.nodeDataUpdater()
+            this.shareDataUpdater()
         },
         mounted: function () {
 
         },
         methods: {
-             getData() {
+            getData() {
                 axios.get("/api/cluster/getData")
                     .then(function (resp) {
                         app.shareData = resp.data.data
-                        app.clusterNodeStateInit()
                     }).catch(resp => {
                     console.log('请求失败：' + resp.status + ',' + resp.statusText);
                 });
@@ -71,14 +100,16 @@
             getNodeInfo() {
                 axios.get('/api/cluster/getNodeInfo')
                     .then(function (resp) {
-                        app.ownData = resp.data.data
+                        app.ownData.Address = resp.data.data.Address
+                        app.ownData.ClusterState = resp.data.data.ClusterState
+                        app.ownData.MasterAddress = resp.data.data.MasterAddress
                         app.socketInit()
                     }).catch(resp => {
                     console.log('请求失败：' + resp.status + ',' + resp.statusText);
                 });
             },
             socketInit() {
-                let socket = new WebSocket("ws://"+this.ownData.Address+"/ws");
+                let socket = new WebSocket("ws://" + this.ownData.Address + "/ws");
                 console.log("Socket Connect Success");
                 socket.onopen = function () {
                     $(".console-info").text("Socket Open Success");
@@ -89,35 +120,76 @@
                     $(".console-info").text("foo")
                 }
             },
-            clusterNodeStateInit(){
-                 for(let i=0;i<this.shareData.Clusters.length;i++){
-                     axios.get("http://"+this.shareData.Clusters[i].Address+'/api/cluster/getNodeInfo')
-                         .then(function (resp) {
-                             resp.data
-                         }).catch(resp => {
-                         console.log('请求失败：' + resp.status + ',' + resp.statusText);
-                     })
-                 }
+            nodeDataUpdater() {
+                setInterval(function () {
+                    for (let i = 0; i < app.shareData.Clusters.length; i++) {
+                        axios.get("http://" + app.shareData.Clusters[i].Address + '/api/cluster/getNodeInfo', {timeout: 1000 * 10})
+                            .then(function (resp) {
+                                app.$set(
+                                    app.shareData.Clusters,
+                                    i,
+                                    {
+                                        Address: app.shareData.Clusters[i].Address,
+                                        Name:app.shareData.Clusters[i].Name,
+                                        Level:app.shareData.Clusters[i].Level,
+                                        ClusterState: resp.data.data.ClusterState,
+                                        MasterAddress: resp.data.data.MasterAddress,
+                                        FlashTag: (app.shareData.Clusters[i].FlashTag == null || app.shareData.Clusters[i].FlashTag.length > 2) ? "." : (app.shareData.Clusters[i].FlashTag + ".")
+                                    }
+                                )
+                            }).catch(resp => {
+                            app.$set(
+                                app.shareData.Clusters,
+                                i,
+                                {
+                                    Address: app.shareData.Clusters[i].Address,
+                                    Name:app.shareData.Clusters[i].Name,
+                                    Level:app.shareData.Clusters[i].Level,
+                                    ClusterState: "*",
+                                    MasterAddress: "*",
+                                    FlashTag: (app.shareData.Clusters[i].FlashTag == null || app.shareData.Clusters[i].FlashTag.length > 2) ? "." : (app.shareData.Clusters[i].FlashTag + ".")
+                                }
+                            )
+                        })
+                    }
+                }, 3000)
+            },
+            shareDataUpdater() {
+                setInterval(function () {
+                    axios.get("http://" + app.ownData.Address + '/api/cluster/getCusterInfo', {timeout: 1000 * 10})
+                        .then(function (resp) {
+                            for (let i = 0; i < resp.data.data.Clusters.length; i++) {
+                                for (let j = 0; j < app.shareData.Clusters.length; j++) {
+                                    if (resp.data.data.Clusters[i].Address == app.shareData.Clusters[j].Address) {
+                                        app.$set(app.shareData.Clusters,
+                                            j,
+                                            {
+                                                Address:app.shareData.Clusters[j].Address,
+                                                Name:resp.data.data.Clusters[i].Name,
+                                                Level:resp.data.data.Clusters[i].Level,
+                                                ClusterState:app.shareData.Clusters[j].ClusterState,
+                                                MasterAddress:app.shareData.Clusters[j].MasterAddress,
+                                                FlashTag: "~~"
+                                            })
+                                    }
+                                }
+                            }
+                        }).catch(resp => {
+                        for (let j = 0; j < app.shareData.Clusters.length; j++) {
+                            app.$set(app.shareData.Clusters,
+                                    j,
+                                    {
+                                        Address:app.shareData.Clusters[j].Address,
+                                        Name:"*",
+                                        Level:"*",
+                                        ClusterState:app.shareData.Clusters[j].ClusterState,
+                                        MasterAddress:app.shareData.Clusters[j].MasterAddress,
+                                        FlashTag: "*"
+                                    })
+                        }
+                    })
+                }, 3000)
             }
         },
     });
-    // $(function () {
-    //     let socket = new WebSocket("ws://10.41.69.40:6001/ws");
-    //     console.log("Socket Connect Success");
-    //
-    //     socket.onopen = function () {
-    //         $(".console-info").text("Socket Open Success");
-    //         console.log("bar");
-    //     };
-    //
-    //     socket.onmessage = function (msg) {
-    //         console.log(msg.data)
-    //         $(".console-info").text("foo")
-    //     }
-    //
-    //     // socket.onclose = function () {
-    //     //     console.log("Socket Close Success");
-    //     // }
-    //     //
-    // });
 </script>

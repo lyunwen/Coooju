@@ -17,6 +17,7 @@
     border: #dce0e6 2px dashed;
     margin: 10px;
     padding: 3px;
+    min-width: 218px;
 }
 
 .index .services-title {
@@ -39,17 +40,16 @@
     padding: 3px;
 }
 
-
 /**/
 .live-icon:after {
-    display: inline-block;
-    content: "o";
-    color: red;
-    vertical-align: top;
-    margin-right: 2px;
-    font-size: 1px;
-    position: relative;
-    left: -7px;
-    width: 0px;
-    top: -5px;
+    /*display: inline-block;*/
+    /*content: "o";*/
+    /*color: red;*/
+    /*vertical-align: top;*/
+    /*margin-right: 2px;*/
+    /*font-size: 1px;*/
+    /*position: relative;*/
+    /*left: -7px;*/
+    /*width: 0px;*/
+    /*top: -5px;*/
 }

@@ -30,6 +30,10 @@ func Check() error {
 				log.Warn("[Follow]set data error" + err.Error())
 				break
 			}
+			for _, item := range dataInfo.Clusters {
+				if item.Address == cluster.OwnData.Address {
+				}
+			}
 		} else {
 			for _, item := range cluster.ShareData.Clusters {
 				otherNode, err := getNodeInfo(client, item.Address)
@@ -50,8 +54,8 @@ func Check() error {
 				log.Warn("[Leader]Url:" + item.Address + "check error：" + err.Error())
 			} else if node.ClusterState == clusterState.Follow {
 				log.Warn("[Leader]Url:" + item.Address + "check success")
-			} else if node.ClusterState == clusterState.Leader && node.Level > cluster.OwnData.Level {
-				log.Warn("[Leader]Url:" + item.Address + "find bigger level:" + strconv.Itoa(node.Level) + ">" + strconv.Itoa(cluster.OwnData.Level))
+			} else if node.ClusterState == clusterState.Leader && node.GetLevel() > cluster.OwnData.GetLevel() {
+				log.Warn("[Leader]Url:" + item.Address + "find bigger level:" + strconv.Itoa(node.GetLevel()) + ">" + strconv.Itoa(cluster.OwnData.GetLevel()))
 				log.Warn("[Leader]master exchange:" + cluster.OwnData.MasterAddress + " ->" + node.Address)
 				cluster.OwnData.MasterAddress = node.Address
 			} else {

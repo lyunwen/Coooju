@@ -15,9 +15,25 @@ var (
 type CurrentNodeInfo struct {
 	MasterAddress string
 	ClusterState  clusterState.ClusterState
-	Name          string
-	Level         int
 	Address       string
+}
+
+func (info *CurrentNodeInfo) GetName() string {
+	for _, item := range ShareData.Clusters {
+		if item.Address == info.Address {
+			return item.Name
+		}
+	}
+	panic("no find")
+}
+
+func (info *CurrentNodeInfo) GetLevel() int {
+	for _, item := range ShareData.Clusters {
+		if item.Address == info.Address {
+			return item.Level
+		}
+	}
+	panic("no find")
 }
 
 func Init() {
@@ -31,8 +47,6 @@ func Init() {
 				OwnData = &CurrentNodeInfo{
 					ClusterState:  clusterState.Follow,
 					Address:       item.Address,
-					Name:          item.Name,
-					Level:         item.Level,
 					MasterAddress: "",
 				}
 				break
