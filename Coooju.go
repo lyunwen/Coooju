@@ -4,20 +4,18 @@ import (
 	"./api"
 	"./cluster"
 	"./common/log"
-	"./data"
 	"./sockects"
 	"./timer"
-	"fmt"
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	data.Load()
-	router := gin.Default()                                                      //api路由       //主同步备接口
-	router.Group("/api/IsMaster").GET("/", api.IsMaster)                         //备机找主机
-	router.Group("/api/cluster/getData").GET("/", api.GetData)                   //备机找主机
-	router.Group("/api/cluster/syncData").GET("/", api.SyncData)                 //备机找主机
-	router.Group("/api/cluster/getMasterAddress").GET("/", api.GetMasterAddress) //获取主机地址
+	cluster.Init()
+	router := gin.Default()                                                 //api路由       //主同步备接口
+	router.Group("/api/cluster/getData").GET("/", api.GetData)              //备机找主机
+	router.Group("/api/cluster/syncData").GET("/", api.SyncData)            //备机找主机
+	router.Group("/api/cluster/getCusterInfo").GET("/", api.GetClusterInfo) //备机找主机
+	router.Group("/api/cluster/getNodeInfo").GET("/", api.GetNodeInfo)      //备机找主机
 	//web socket 路由
 	router.GET("/ws", func(c *gin.Context) { sockects.WebSocketHandler(c.Writer, c.Request) })
 	//html页面路由
@@ -27,12 +25,7 @@ func main() {
 	router.Static("/view", "./view")
 	router.Static("/wwwroot", "./wwwroot")
 
-	var url, err = cluster.GetAvailablePortAddress()
-	if err != nil {
-		fmt.Println("start error:" + err.Error())
-		return
-	}
-	log.Warn("==============================启动：" + url + "==============================")
+	log.Warn("==============================启动：" + cluster.CurrentData.Address + "==============================")
 	go timer.Load()
-	_ = router.Run(url)
+	_ = router.Run(cluster.CurrentData.Address)
 }

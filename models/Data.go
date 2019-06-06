@@ -8,9 +8,7 @@ import (
 )
 
 type Data struct {
-	Version     string //主节点标识+版本号
 	Description string
-	Url         string
 	Services    []Service
 	Clusters    []Cluster
 }

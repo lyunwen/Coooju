@@ -2,9 +2,9 @@ package timer
 
 import (
 	"../cluster"
+	"../cluster/clusterState"
 	"../cluster/mastercheck"
 	"../common/log"
-	"../global"
 	"time"
 )
 
@@ -38,8 +38,8 @@ func SynchronyDataLoop() {
 	ticker := time.NewTicker(time.Second * 10)
 	go func() {
 		for range ticker.C {
-			if global.SelfFlag == 2 {
-				if err := cluster.SynchronyData(global.MasterUrl); err != nil {
+			if cluster.CurrentData.ClusterState == clusterState.Follow {
+				if err := cluster.SynchronyData(cluster.CurrentData.MasterAddress); err != nil {
 					log.Error("SynchronyDataLoop:" + err.Error())
 				}
 			}

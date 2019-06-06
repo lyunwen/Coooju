@@ -2,19 +2,17 @@ package api
 
 import (
 	"../cluster"
-	"../global"
 	"../models"
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"strconv"
 )
 
-func IsMaster(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"code": strconv.Itoa(global.SelfFlag), "msg": "", "data": global.CuCluster})
+func GetClusterInfo(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"code": "0", "msg": "", "data": cluster.ClusterData})
 }
 
-func GetMasterAddress(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"code": strconv.Itoa(global.SelfFlag), "msg": "", "data": global.MasterUrl})
+func GetNodeInfo(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"code": "0", "msg": "", "data": cluster.CurrentData})
 }
 
 func GetData(c *gin.Context) {
@@ -23,7 +21,7 @@ func GetData(c *gin.Context) {
 }
 
 func SyncData(c *gin.Context) {
-	err := cluster.SynchronyData(global.MasterUrl)
+	err := cluster.SynchronyData(cluster.CurrentData.MasterAddress)
 	if err == nil {
 		c.JSON(http.StatusOK, gin.H{"code": "0", "msg": "", "data": nil})
 	} else {
