@@ -37,6 +37,7 @@ func Init() {
 					MasterAddress: "",
 				}
 				_ = conn.Close()
+				break
 			}
 		}
 		if index+1 == len(ClusterData.Clusters) {
