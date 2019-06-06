@@ -22,7 +22,6 @@ type CurrentNodeInfo struct {
 
 func Init() {
 	ClusterData = new(models.Data).GetData()
-	CurrentData = new(CurrentNodeInfo)
 	for index, item := range ClusterData.Clusters {
 		isLocalIp, err := isLocalIp(strings.Split(item.Address, ":")[0])
 		if err != nil {
@@ -31,10 +30,12 @@ func Init() {
 		if isLocalIp {
 			conn, err := net.Dial("tcp", item.Address)
 			if err != nil {
-				CurrentData.ClusterState = clusterState.Follow
-				CurrentData.Address = item.Address
-				CurrentData.Level = item.Level
-				CurrentData.MasterAddress = ""
+				CurrentData = &CurrentNodeInfo{
+					ClusterState:  clusterState.Follow,
+					Address:       item.Address,
+					Level:         item.Level,
+					MasterAddress: nil,
+				}
 			}
 			_ = conn.Close()
 		}
