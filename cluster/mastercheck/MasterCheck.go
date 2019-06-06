@@ -55,7 +55,7 @@ func Check() error {
 				log.Warn("[Leader]master exchange:" + cluster.OwnData.MasterAddress + " ->" + node.Address)
 				cluster.OwnData.MasterAddress = node.Address
 			} else {
-				log.Warn("Url:" + item.Address + "error")
+				log.Warn("Url:" + item.Address + " State:" + strconv.Itoa(int(clusterState.Leader)))
 			}
 		}
 	default:
