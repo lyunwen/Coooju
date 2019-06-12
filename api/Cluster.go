@@ -12,7 +12,13 @@ func GetClusterInfo(c *gin.Context) {
 }
 
 func GetNodeInfo(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"code": "0", "msg": "", "data": cluster.OwnData})
+	c.JSON(http.StatusOK, gin.H{"code": "0", "msg": "", "data": cluster.CurrentNodeInfo{
+		MasterAddress: cluster.OwnData.MasterAddress,
+		ClusterState:  cluster.OwnData.ClusterState,
+		Address:       cluster.OwnData.Address,
+		Name:          cluster.OwnData.GetName(),
+		Level:         cluster.OwnData.GetLevel(),
+	}})
 }
 
 func GetData(c *gin.Context) {

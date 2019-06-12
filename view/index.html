@@ -6,6 +6,7 @@
     <script type="text/javascript" src="/wwwroot/jquery-3.3.1.min.js"></script>
     <script type="text/javascript" src="/wwwroot/vue.js"></script>
     <script type="text/javascript" src="/wwwroot/axios.min.js"></script>
+    <script type="text/javascript" src="/wwwroot/main.js"></script>
     <link rel="stylesheet" type="text/css" href="/wwwroot/css/index.css">
 </head>
 <body>
@@ -83,7 +84,6 @@
             this.getData()
             this.getNodeInfo()
             this.nodeDataUpdater()
-            this.shareDataUpdater()
         },
         mounted: function () {
 
@@ -130,8 +130,8 @@
                                     i,
                                     {
                                         Address: app.shareData.Clusters[i].Address,
-                                        Name:app.shareData.Clusters[i].Name,
-                                        Level:app.shareData.Clusters[i].Level,
+                                        Name:resp.data.data.Name,
+                                        Level:resp.data.data.Level,
                                         ClusterState: resp.data.data.ClusterState,
                                         MasterAddress: resp.data.data.MasterAddress,
                                         FlashTag: (app.shareData.Clusters[i].FlashTag == null || app.shareData.Clusters[i].FlashTag.length > 2) ? "." : (app.shareData.Clusters[i].FlashTag + ".")
@@ -143,8 +143,8 @@
                                 i,
                                 {
                                     Address: app.shareData.Clusters[i].Address,
-                                    Name:app.shareData.Clusters[i].Name,
-                                    Level:app.shareData.Clusters[i].Level,
+                                    Name:"*",
+                                    Level:"*",
                                     ClusterState: "*",
                                     MasterAddress: "*",
                                     FlashTag: (app.shareData.Clusters[i].FlashTag == null || app.shareData.Clusters[i].FlashTag.length > 2) ? "." : (app.shareData.Clusters[i].FlashTag + ".")
@@ -152,42 +152,6 @@
                             )
                         })
                     }
-                }, 3000)
-            },
-            shareDataUpdater() {
-                setInterval(function () {
-                    axios.get("http://" + app.ownData.Address + '/api/cluster/getCusterInfo', {timeout: 1000 * 10})
-                        .then(function (resp) {
-                            for (let i = 0; i < resp.data.data.Clusters.length; i++) {
-                                for (let j = 0; j < app.shareData.Clusters.length; j++) {
-                                    if (resp.data.data.Clusters[i].Address == app.shareData.Clusters[j].Address) {
-                                        app.$set(app.shareData.Clusters,
-                                            j,
-                                            {
-                                                Address:app.shareData.Clusters[j].Address,
-                                                Name:resp.data.data.Clusters[i].Name,
-                                                Level:resp.data.data.Clusters[i].Level,
-                                                ClusterState:app.shareData.Clusters[j].ClusterState,
-                                                MasterAddress:app.shareData.Clusters[j].MasterAddress,
-                                                FlashTag: "~~"
-                                            })
-                                    }
-                                }
-                            }
-                        }).catch(resp => {
-                        for (let j = 0; j < app.shareData.Clusters.length; j++) {
-                            app.$set(app.shareData.Clusters,
-                                    j,
-                                    {
-                                        Address:app.shareData.Clusters[j].Address,
-                                        Name:"*",
-                                        Level:"*",
-                                        ClusterState:app.shareData.Clusters[j].ClusterState,
-                                        MasterAddress:app.shareData.Clusters[j].MasterAddress,
-                                        FlashTag: "*"
-                                    })
-                        }
-                    })
                 }, 3000)
             }
         },

@@ -16,6 +16,8 @@ type CurrentNodeInfo struct {
 	MasterAddress string
 	ClusterState  clusterState.ClusterState
 	Address       string
+	Name          string
+	Level         int
 }
 
 func (info *CurrentNodeInfo) GetName() string {
